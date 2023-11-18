@@ -1,0 +1,92 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="lib">
+      <UniqueIdentifier>{bef425c3-bf71-40cf-8a71-913c1cfdf294}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\header">
+      <UniqueIdentifier>{a2a2d0ab-c2fe-450e-81fc-acc15701ec46}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\source">
+      <UniqueIdentifier>{40a07973-286f-4d5e-8a03-93897dc87305}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\shader">
+      <UniqueIdentifier>{951a9dd5-feb5-4442-93a4-09c27e77f1a6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lib\module">
+      <UniqueIdentifier>{74425c1f-05ca-496f-a552-f0b590b74205}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="lib\header\camera.h">
+      <Filter>lib\header</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\header\shapes.h">
+      <Filter>lib\header</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\header\mesh.h">
+      <Filter>lib\header</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\header\shader.h">
+      <Filter>lib\header</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\header\vertex.h">
+      <Filter>lib\header</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\header\drawable.h">
+      <Filter>lib\header</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\source\mesh.hpp">
+      <Filter>lib\source</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\source\drawable.hpp">
+      <Filter>lib\source</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\source\point_cloud.hpp">
+      <Filter>lib\source</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\header\point_cloud.h">
+      <Filter>lib\header</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\header\view_window.h">
+      <Filter>lib\header</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="lib\source\camera.cpp">
+      <Filter>lib\source</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\source\shapes.cpp">
+      <Filter>lib\source</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\source\main.cpp">
+      <Filter>lib\source</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\source\misc.cpp">
+      <Filter>lib\source</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\source\shader.cpp">
+      <Filter>lib\source</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\module\misc.ixx">
+      <Filter>lib\module</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\source\vertex.cpp">
+      <Filter>lib\source</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\source\view_window.cpp">
+      <Filter>lib\source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="lib\shader\vertex.glsl">
+      <Filter>lib\shader</Filter>
+    </None>
+    <None Include="lib\shader\compute_face_normals.glsl">
+      <Filter>lib\shader</Filter>
+    </None>
+    <None Include="lib\shader\frag.glsl">
+      <Filter>lib\shader</Filter>
+    </None>
+  </ItemGroup>
+</Project>
