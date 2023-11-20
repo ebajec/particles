@@ -38,6 +38,22 @@ vec3 attractor(vec3 pos) {
 
 float G = 0.0001;
 
+// Considering the paths x1 + t*v1 and x2 + t*v2, we check the first value of t for which
+// the particles would collide on this path. 
+float t_collide(vec3 x1,vec3 x2, vec3 v1, vec3 v1, float r) {
+    vec3 xdiff = x1-x2;
+    vec3 vdiff = v1-v2;
+
+    if (vdiff == 0) return -1;
+
+    float D = 4*pow(dot(xdiff,vdiff),2)-4*dot(vdiff,vdiff)*(dot(xdiff,xdiff) - 4*pow(r,2));
+
+    if (D < 0) return -1;
+
+    float disc = sqrt(D)
+
+   return min(dot(xdiff,vdiff)+0.5*disc,dot(xdiff,vdiff)-0.5*disc)/dot(vdiff,vdiff)
+}
 
 void main() {
 
@@ -64,11 +80,11 @@ void main() {
 
             if (colors[idy].w < 1 && diff < 0) {
                 vec3 u = -r/dist;
-                velocities[idx] -= dot(velocities[idx],u);
-                velocities[idy] -= dot(velocities[idy],u);
+                velocities[idx] += dot(velocities[idx],u);
+                velocities[idy] += dot(velocities[idy],u);
 
-                positions[idx] += 1.1*diff*u;
-                positions[idy] -= 1.1*diff*u;
+                positions[idx] -= 2*diff*u;
+                positions[idy] += 2*diff*u;
 
                 colors[idy].w = 2;
                 colors[idx].w = 2;
