@@ -16,7 +16,7 @@ vec3 centroid(Vertex* start);
 
 enum ShapeType { LINE = 2, TRIANGLE = 3 };
 
-class Mesh : public GLBufferWrapper<VERTEX_ATTRIBUTES> {
+class Mesh : public GLBufferWrapper<VERTEX_ATTRIBUTES,0> {
 
 public:
 	Mesh();
@@ -29,7 +29,7 @@ public:
 	~Mesh();
 
 	void center();
-	void colorCurvature();
+	void colorCurvature(float angle=PI);
 	void computeNormals();
 	void setType(ShapeType type);
 
@@ -66,7 +66,7 @@ protected:
 	
 	void _findFacesTriangular();
 	void _findEdges();
-	void _loadVBOs(float** attribute_buffers);
+	void _load(float** vbufs,float** sbufs);
 };
 
 #include "mesh.hpp"

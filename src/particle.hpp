@@ -5,15 +5,16 @@
 
 void Particles::_init() {
 	//define primitive sizes for each vertex buffer and create empty array for each one
-	_vbo_primitives[POS] = 3;
-	_vbo_primitives[COL] = 3;
+	_vbo_primitives[POS] = 4;
+	_vbo_primitives[COL] = 4;
+
 	_vbo_layout[POS] = 0;
 	_vbo_layout[COL] = 1;
 	
-	
-	_ssbo_primitives[VEL] = 3;
-	_ssbo_primitives[ACC] = 3;
+	_ssbo_primitives[VEL] = 4;
+	_ssbo_primitives[ACC] = 4;
 	_ssbo_primitives[COLLISION] = 1;
+
 	_ssbo_layout[VEL] = 0;
 	_ssbo_layout[ACC] = 1;
 	_ssbo_layout[ACC] = 2;
@@ -23,38 +24,41 @@ Particles::Particles(int count,vec3 bound) : GLBufferWrapper<PART_VBOS,PART_SSBO
 	_init();
 	this->_count = count;
 	this->_bound = bound;
+	this->_ssbo_sizes[ACC] = _count;
+	this->_ssbo_sizes[VEL] = _count;
+	this->_ssbo_sizes[COLLISION] = _count*_count;
+
 
 	this->initBuffers(GL_STREAM_DRAW);
+}
 
+void Particles::update(ComputeShader shader)
+{
 	//set up for compute shader
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER,0,_vbos[POS]);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER,1,_ssbo[VEL]);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER,2,_ssbo[ACC]);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER,3,_vbos[COL]);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER,4,_vbos[COLLISION]);
-	
-}
 
-void Particles::update(ComputeShader shader)
-{
 	double t = glfwGetTime();
 
 	shader.use();
 	shader.setUniform("nPoints", (int)_count);
-	shader.setUniform("delta",(float)(t - t_o) );
+	shader.setUniform("delta",(float)(0.1) );
 	shader.setUniform("t", (float)(t));
 
 	glDispatchCompute((int)(_count+63) / 64, (int)(_count+15) / 16, 1);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 	glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
 
-	float* mem;
-	glBindBuffer(GL_ARRAY_BUFFER, (_vbos)[COL]);
-	mem = (float*)glMapBufferRange(GL_ARRAY_BUFFER, 0, vPrimitives() * sizeof(float), GL_MAP_WRITE_BIT);
-	for (int i = 0; i < vPrimitives(); i++) {
-		mem[4*i + 3 ] = 0;
-	}
-	glUnmapBuffer(GL_ARRAY_BUFFER);
+	//float* mem;
+	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, (_ssbo)[COLLISION]);
+	//mem = (float*)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, ssboBufSize(COLLISION) * sizeof(float), GL_MAP_WRITE_BIT);
+	//for (int i = 0; i < ssboBufSize(COLLISION); i++) {
+	//	mem[i] = 0.0f;
+	//}
+	//glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
 	return;
 }
@@ -73,8 +77,8 @@ inline vec3 point_ball(float r) {
 }
 
 inline vec3 i_torus(float rhole,float rtube, int i,int n) {
-	float s = (PI*i)/n;
-	float t = (2*PI*(i%(10)))/10;
+	float s = (2*PI*i)/n;
+	float t = PI;
 	return Torus(rhole,rtube)(s,t);
 }
 
@@ -84,25 +88,38 @@ inline vec3 path(int i,int n) {
 }
 
 void Particles::_load(float **vbufs,float **sbufs)
-{
-		//fill buffers with random points
-		for (int i = 0; i < this->vPrimitives(); i++) {
-			vec3 point = point_ball(2) + vec3{-20.0f*(i%3)*(i%2),20.0f*(i%2)};
-			vec4 vel = vec3{0,0,0};
+{	
+	vector<vec3> points(_count);
+	vector<vec3> vels(_count);
 
-			for (int k = 0; k < 4; k++) {
-				int ind = 4*i + k;
-				vbufs[POS][ind] = *point[k];
-				vbufs[COL][ind] = ((i+1)%(k+1))*0.25;
-				sbufs[VEL][ind] = *vel[k];
-			}
-			vbufs[COL][3] = 0;
+	//points[0] = vec3{5,1,0};
+	//points[1] = vec3{-5,1,0};
+	//points[2] = vec3{1,-10,0};
+//
+	//vels[0] = vec3{-0.005,0,0};
+	//vels[1] = vec3{0.002,0,0};
+	//vels[2] = vec3{0,0.005,0};
+
+	//fill buffers with random points
+	for (int i = 0; i < this->vPrimitives(); i++) {
+		vec3 point = i_torus(30.0f,5.0f,i,vPrimitives());
+		vec4 vel = vec3{0,0,0};//vels[i];
+
+		for (int k = 0; k < 4; k++) {
+			int ind = 4*i + k;
+			vbufs[POS][ind] = *point[k];
+			vbufs[COL][ind] = 1*((i%4)==k);
+			sbufs[VEL][ind] = *vel[k];
 		}
 
-		for (int i = 0; i < std430BufSize(0); i++) {
-			sbufs[ACC][i] = 0.0f;
-			sbufs[COLLISION][i] = 0.0f;
-		}
+		vbufs[COL][3] = 0;
+	}
+	for (int i = 0; i < std430BufSize(0); i++) {
+		sbufs[ACC][i] = 0.0f;
+	}
+	for (int i = 0; i < ssboBufSize(COLLISION); i++) {
+		sbufs[COLLISION][i] = 0.0f;
+	}
 		
 	return;
 }

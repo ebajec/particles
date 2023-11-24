@@ -35,68 +35,97 @@ vec3 attractor(vec3 pos) {
     return (0.0000001/pow(dot(r,r),3/2))*r;
 }
 
-
-float G = 0.0001;
-
 // Considering the paths x1 + t*v1 and x2 + t*v2, we check the first value of t for which
 // the particles would collide on this path. 
-float t_collide(vec3 x1,vec3 x2, vec3 v1, vec3 v1, float r) {
+float t_collide(vec3 x1,vec3 x2, vec3 v1, vec3 v2, float rc) {
     vec3 xdiff = x1-x2;
     vec3 vdiff = v1-v2;
+    float dotxv = dot(xdiff,vdiff);
 
-    if (vdiff == 0) return -1;
+    if (dot(v1,v1) + dot(v2,v2) < 1e-6) return 0;
 
-    float D = 4*pow(dot(xdiff,vdiff),2)-4*dot(vdiff,vdiff)*(dot(xdiff,xdiff) - 4*pow(r,2));
+    float D = 4*dotxv*dotxv-4*dot(vdiff,vdiff)*(dot(xdiff,xdiff) - 4*rc*rc);
 
-    if (D < 0) return -1;
-
-    float disc = sqrt(D)
-
-   return min(dot(xdiff,vdiff)+0.5*disc,dot(xdiff,vdiff)-0.5*disc)/dot(vdiff,vdiff)
+    if (D < 0) {
+        return -1;
+    }
+    else {
+        return (-dotxv-0.5*sqrt(D))/dot(vdiff,vdiff);
+    } 
 }
 
+float dt = delta;
+float r_collide = 1;
+float G = 0.05;
+
+//void handle_collision(uint idx, uint idy, float dist, vec3 r) {
+//    vec3 u = r/dist;
+//
+//    vec3 uproj1x = u*dot(velocities[idx],u);
+//    vec3 uproj2x = u*dot(velocities[idy],u);
+//
+//    vec3 uproj1y = velocities[idx] - uproj1x;
+//    vec3 uproj2y = velocities[idy] - uproj2x;
+//
+//    velocities[idx] = 0.8*(uproj1y + uproj2x);
+//    velocities[idy] = 0.8*(uproj2y + uproj1x);
+//    
+//    return;
+//}
+
 void main() {
-
-    float dt = delta;
-    float r_collide = 0.5;
-
     uint idx = gl_GlobalInvocationID.x;
     uint idy = gl_GlobalInvocationID.y;
     
     vec3 pos = positions[idx];
     vec3 vel = velocities[idx];
 
+    velocities[idx] += dt*accelerations[idx];
+    accelerations[idx] = vec3(0,0,0);
+
     //calculate new values
-    if (idy < nPoints) { 
+    if (idy < nPoints && idy != idx)  {
+        vec3 r = positions[idx] - positions[idy];
+        float dist = -1;
+        float tc = t_collide(positions[idx],positions[idy],velocities[idx],velocities[idy],r_collide);
 
-        velocities[idx] += dt*accelerations[idx];
-        accelerations[idx] = vec3(0,0,0);
 
-        if (idy != idx)  {
-            vec3 r = positions[idy] - pos;
+        if (tc > 0 && tc < dt ){
 
-            float dist = sqrt(dot(r,r));
-            float diff = 0.5*dist - r_collide;
+            positions[idx] += velocities[idx]*tc;
+            positions[idy] += velocities[idy]*tc;
 
-            if (colors[idy].w < 1 && diff < 0) {
-                vec3 u = -r/dist;
-                velocities[idx] += dot(velocities[idx],u);
-                velocities[idy] += dot(velocities[idy],u);
+            r = positions[idx] - positions[idy];
+            dist = sqrt(dot(r,r));
 
-                positions[idx] -= 2*diff*u;
-                positions[idy] += 2*diff*u;
+            vec3 u = r/dist;
 
-                colors[idy].w = 2;
-                colors[idx].w = 2;
-            }
-            accelerations[idx] += (G/pow(dist,2))*r;    
+            vec3 uproj1x = u*dot(velocities[idx],u);
+            vec3 uproj2x = u*dot(velocities[idy],u);
+
+            vec3 uproj1y = velocities[idx] - uproj1x;
+            vec3 uproj2y = velocities[idy] - uproj2x;
+
+            velocities[idx] = 0.8*(uproj1y + uproj2x);
+            velocities[idy] = 0.8*(uproj2y + uproj1x);
         }
-    
-        barrier();
-        positions[idx] += dt*vel;
-        
+
+        if (dist < 0) dist = sqrt(dot(r,r));
+
+        //worst case check if balls end up colliding
+        if (dist < 2*r_collide) {
+            float diff = dist - 2*r_collide;
+            positions[idx] -= 0.98*(diff/dist) * r;
+            //positions[idy] += 0.5*(diff/dist) * r;
+        }
+
+        //I'm not using gravity for testing purposes
+        accelerations[idx] -= (G/(dist*dist))*r; 
+           
     }
+
     barrier();
+    positions[idx] += dt*velocities[idx];
 
     if (idx >= nPoints) {
         return;

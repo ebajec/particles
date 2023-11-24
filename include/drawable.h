@@ -20,14 +20,19 @@ public:
 	void transformAffine(mat4 A) { _model = _model * A; }
 	void resetTransformations() {_model = mat4(mat3::id());}
 	void draw(ShaderProgram shader, int count = -1);
+	void setModel(mat4 A) {_model = A;}
 
 	void setMode(GLenum mode) { _draw_mode = mode; }
+
+	// Open buffer for reading by CPU. type must be either "vbo" or "ssbo".  loc
+	// is the attribute index.  
+	// IMPORTANT: glUnmapBuffer(buffer object) MUST be called afterwards
+	void openBuffer(float** out, GLuint buffer_object, int loc, GLuint access);
 
 	//Number of individual points in vertex array, i.e, the shaders will
 	//run this many times.
 	virtual unsigned long vPrimitives() { return 0; }
-
-	virtual unsigned long sPrimitives(int binding) { return 0; }
+	unsigned long ssboBufSize(int buffer){return _ssbo_sizes[buffer]*_ssbo_primitives[buffer];}
 
 protected:
 	//identifies each binding with location in vertex array.  Only really needed
@@ -39,6 +44,7 @@ protected:
 	//ex: if binding 0 was a 3D position, _primitive_sizes[0] = 1. 
 	int _vbo_primitives[nVBO];
 	int _ssbo_primitives[nSSBO];
+	int _ssbo_sizes[nSSBO];
 
 	//transformation applied to vertices in vertex shader
 	mat4 _model;

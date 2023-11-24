@@ -40,9 +40,9 @@ const char* geometry_shader_path) {
 	string fragment_shader_source = read_text_file(fragment_shader_path);
 	string geometry_shader_source = "";
 
-	if (*geometry_shader_path != 'a') {
-		geometry_shader_source = read_text_file(geometry_shader_path);
-		_compileShader(GL_GEOMETRY_SHADER, geometry_shader_source.c_str());
+	if (geometry_shader_path != "") {
+		//geometry_shader_source = read_text_file(geometry_shader_path);
+		//_compileShader(GL_GEOMETRY_SHADER, geometry_shader_source.c_str());
 	}
 
 	if (fragment_shader_source == "" || vertex_shader_source == "") {

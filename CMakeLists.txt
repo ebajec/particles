@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD 20)
 # Find source files
 file(GLOB SOURCES "src/*.cpp")
 
+
 #if https://github.com/ebajec/linear-algebra is cloned to the same location as
 #this project, this should work fine.  If not, make sure to add in here the path 
 #to wherever it was cloned. 
@@ -30,6 +31,7 @@ else ()
 endif ()
 
 add_subdirectory(${GLFW_ROOT_DIR} build)
+file(COPY ${CMAKE_SOURCE_DIR}/windows/glew32.dll DESTINATION ${CMAKE_BINARY_DIR})
 
 find_package(OpenGL REQUIRED)
 

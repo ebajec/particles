@@ -9,6 +9,7 @@
 #include <GL/glew.h>
 #include <vector>
 #include <forward_list>
+#include <type_traits>
 
 
 #define VERTEX_ATTRIBUTES 4
@@ -135,8 +136,14 @@ inline forward_list<Vertex*> common_vertices(Vertex* v, Vertex* w) {
 	return common;
 }
 
-template<typename func>
-inline void bfs(Vertex* start, func s) {
+
+
+// Breadth first traversal. F must be a callable object taking one vertex; this
+// will be called once for each vertex.  E must be a callable object taking two 
+// vertices; this will be run once for each edge.
+// Both functions are optional arguments, but include at least one.
+template<typename vFunc = std::nullptr_t ,typename eFunc = std::nullptr_t>
+inline void bft(Vertex* start, vFunc F = 0, eFunc E  = 0) {
 	std::queue<Vertex*> queue;
 	unordered_set<Vertex*> visited;
 
@@ -145,12 +152,17 @@ inline void bfs(Vertex* start, func s) {
 
 	while (!queue.empty()) {
 		Vertex* dequeued = (Vertex*)queue.front();
-		queue.pop();
-		s(dequeued);
+		queue.pop();	
+
+		//only run if F was defined
+		if constexpr (!std::is_same<vFunc, std::nullptr_t>::value) F(dequeued);
 
 		//Mark connections as visited and add unvisited to queue
 		for (Vertex* v : dequeued->connections) {
 
+			//only run if E was defined
+			if constexpr (!std::is_same<eFunc, std::nullptr_t>::value) E(dequeued,v);
+		
 			//Only queue the vertex if insert() returns true for new element insertion
 			bool new_insertion = visited.insert(v).second;
 

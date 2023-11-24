@@ -10,6 +10,7 @@
 #include "view_window.h"
 #include "math.h"
 #include "particle.h"
+#include "mesh.h"
  
 using vec3 = matrix<3, 1, GLfloat>;
 using mat3 = matrix<3, 3, GLfloat>;
@@ -17,16 +18,47 @@ using mat3 = matrix<3, 3, GLfloat>;
 #define WINDOW_HEIGHT 1080	
 #define WINDOW_WIDTH 1920
 
+#define NPARTS 30
+
+void set_ball_positions(Mesh** balls, Particles* particles) {
+	float* positions; 
+	particles->openBuffer(&positions,GL_ARRAY_BUFFER,POS,GL_MAP_READ_BIT);
+	for (int i = 0; i < NPARTS; i++) {
+		vec4 pos = vec4(positions + 4*i) + vec4{0,0,0,1};
+		balls[i]->setModel((mat3::id()|vec3(0.0f)).transpose()|pos);
+		//pos.print();std::cout << "\n";
+		
+	}
+	glUnmapBuffer(GL_ARRAY_BUFFER);
+}
 
 //This is a small example program where I graph part of the imaginary of a mobius
 //transformation on a disk in the complex plane.
-class programWindow : public BaseViewWindow {
+class particleSimulation : public BaseViewWindow {
 protected:
 	void _main() {
 		_main_shader = ShaderProgram("../shader/vertex.glsl", "../shader/frag.glsl");
 		ComputeShader compute = ComputeShader("../shader/gravity.glsl");
-	
-		Particles parts(2,vec3{5,5,5});
+
+
+		Particles parts(NPARTS,vec3{3,3,3});
+
+		Mesh* balls[NPARTS];
+
+		for (int i = 0; i < NPARTS; i++) {
+			balls[i] = new Mesh(
+				Surface([=](float s, float t){
+					return Sphere(part_size)(s,t);
+				},PI,2*PI),
+				2,
+				40,
+				40);
+			//balls[i]->setType(LINE);
+			balls[i]->initBuffers(GL_STREAM_DRAW);
+			balls[i]->colorCurvature(PI/3*(float)(i+2)/NPARTS);
+		} 
+		
+		
 		parts.setMode(GL_LINE_LOOP);
 		//main loop
 		glfwSetTime(0);
@@ -34,25 +66,38 @@ protected:
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			_main_shader.use();
 			_cam.connectUniforms(_main_shader);
+			_main_shader.setUniform("nPoints",NPARTS);
 
+			set_ball_positions(balls, &parts);
 			parts.update(compute);
-			parts.draw(_main_shader);
+
+			//parts.draw(_main_shader);
+
+			for (int i = 0; i< NPARTS; i++) {
+				balls[i]->draw(_main_shader);
+			}
 
 			glfwSwapBuffers(_window);
 			glfwPollEvents();
 		}
+
+		for (int i = 0; i < NPARTS; i++) {
+			//balls[i]->~Mesh();
+		}
+		delete[] balls;
 	}
 
 	
 public:
-	programWindow(int width, int height) : BaseViewWindow(width, height){}
+	float part_size = 1;//radius of each particle
+	particleSimulation(int width, int height) : BaseViewWindow(width, height){}
 };
 
 
 int main() {
 	std::cout << "Welcome.\n\n";
 
-	programWindow  window(WINDOW_WIDTH, WINDOW_HEIGHT);
+	particleSimulation  window(WINDOW_WIDTH, WINDOW_HEIGHT);
 
 	std::string command;
 

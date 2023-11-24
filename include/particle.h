@@ -24,7 +24,7 @@ private:
     void _init();
 
     unsigned long vPrimitives(){return _count;}
-    unsigned long sPrimitives(){return _count;}
+
     
     void _load(float** vbufs,float** sbufs);
 

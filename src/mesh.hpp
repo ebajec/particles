@@ -16,7 +16,7 @@ vec3 centroid(Vertex* start) {
 		sum = sum + v->position;
 	};
 
-	bfs(start, add_to_sum);
+	bft(start, add_to_sum);
 
 	return sum * (1 / ((float)count));
 }
@@ -29,7 +29,7 @@ void center(Vertex* start)
 
 	};
 
-	bfs(start, move_to_origin);
+	bft(start, move_to_origin);
 }
 
 float discrete_laplacian(Vertex* v) {
@@ -62,28 +62,27 @@ void Mesh::_init() {
 	_draw_mode = GL_TRIANGLES;
 
 	//define primitive sizes for each vertex buffer and create empty array for each one
-	_primitive_sizes[POSITION] = 3;
-	_primitive_sizes[NORMAL] = 3;
-	_primitive_sizes[COLOR] = 3;
-	_primitive_sizes[ADJACENCY] = 3 * _face_list.size();
+	_vbo_primitives[POSITION] = 3;
+	_vbo_primitives[NORMAL] = 3;
+	_vbo_primitives[COLOR] = 3;
+	_vbo_primitives[ADJACENCY] = 3 * _face_list.size();
 
 	for (int i = 0; i < VERTEX_ATTRIBUTES; i++) {
-		_layout_map[i] = i;
+		_vbo_layout[i] = i;
 	}
 }
 
-Mesh::Mesh() : Drawable<VERTEX_ATTRIBUTES>() {
-	_init();
+Mesh::Mesh() : GLBufferWrapper<VERTEX_ATTRIBUTES,0>() {
 }
 
-Mesh::Mesh(Vertex* v_start, bool center_vertices) : Drawable<VERTEX_ATTRIBUTES>() {
+Mesh::Mesh(Vertex* v_start, bool center_vertices) : GLBufferWrapper<VERTEX_ATTRIBUTES,0>() {
 	_init();
 	vector<Vertex*> temp_list;
 	auto add_to_vertices = [&](Vertex* v) {
 		temp_list.push_back(v);
 	};
 
-	bfs(v_start, add_to_vertices);
+	bft(v_start, add_to_vertices);
 	this->_vertex_list = temp_list;
 
 	this->_findEdges();
@@ -96,7 +95,7 @@ Mesh::Mesh(Vertex* v_start, bool center_vertices) : Drawable<VERTEX_ATTRIBUTES>(
 
 
 template<int n>
-Mesh::Mesh(matrix<n, n, int> adjacency, initializer_list<vec3> vertices) : Drawable<VERTEX_ATTRIBUTES>() {
+Mesh::Mesh(matrix<n, n, int> adjacency, initializer_list<vec3> vertices) : GLBufferWrapper<VERTEX_ATTRIBUTES,0>() {
 	_init();
 
 	if (vertices.size() != n) {
@@ -126,7 +125,7 @@ Mesh::Mesh(matrix<n, n, int> adjacency, initializer_list<vec3> vertices) : Drawa
 
 
 template<typename paramFunc>
-Mesh::Mesh(Surface<paramFunc> S, int genus, int N_s, int N_t) : Drawable<VERTEX_ATTRIBUTES>()
+Mesh::Mesh(Surface<paramFunc> S, int genus, int N_s, int N_t) : GLBufferWrapper<VERTEX_ATTRIBUTES,0>()
 {
 	_init();
 
@@ -223,7 +222,7 @@ Mesh::Mesh(Surface<paramFunc> S, int genus, int N_s, int N_t) : Drawable<VERTEX_
 			float t = current_index.second * dt;
 
 			current->position = S.eval(s, t);
-			current->color = hue(s, t * 2 * PI / t_max);
+			current->color = vec3(1);//hue(s, t * 2 * PI / t_max);
 
 			current->connect(next_s);
 			current->connect(next_t);
@@ -273,13 +272,12 @@ unsigned long Mesh::vPrimitives() {
 	return 0;
 }
 
-
 template<typename func>
 void Mesh::transformCPU(VERTEX_ATTRIBUTE attribute,func F) {
 	float* mem;
 	glBindBuffer(GL_ARRAY_BUFFER, (_vbos)[attribute]);
-	mem = (float*)glMapBufferRange(GL_ARRAY_BUFFER, 0, this->_vbufSize(attribute) * sizeof(float), GL_MAP_WRITE_BIT);
-	(mem,this->_vbufSize(attribute));
+	mem = (float*)glMapBufferRange(GL_ARRAY_BUFFER, 0, this->vPrimitives()*_vbo_primitives[attribute] * sizeof(float), GL_MAP_WRITE_BIT);
+	F(mem,this->vPrimitives()*_vbo_primitives[attribute]);
 	glUnmapBuffer(GL_ARRAY_BUFFER);
 }
 
@@ -301,7 +299,7 @@ void Mesh::transformPositionsCPU(func F)
 
 	float* mem;
 	glBindBuffer(GL_ARRAY_BUFFER, (_vbos)[POSITION]);
-	mem = (float*)glMapBufferRange(GL_ARRAY_BUFFER, 0, this->_vbufSize(POSITION) * sizeof(float), GL_MAP_WRITE_BIT);
+	mem = (float*)glMapBufferRange(GL_ARRAY_BUFFER, 0,this->vPrimitives()*_vbo_primitives[POSITION] * sizeof(float), GL_MAP_WRITE_BIT);
 
 	switch (_type) {
 		case TRIANGLE:
@@ -331,9 +329,10 @@ void Mesh::transformVertices(func F) {
 	}
 }
 
-const int VEC_ATTR = 3;
-void Mesh::_loadVBOs(float** attribute_buffers)
+const int vert_attributes = 3;
+void Mesh::_load(float** vbufs,float** sbufs)
 {
+
 	int counter = 0;
 
 	//copy vertex data to respective memory block before copying to buffer
@@ -341,22 +340,14 @@ void Mesh::_loadVBOs(float** attribute_buffers)
 		vector<Vertex*> vertices = E->vertexArray();
 
 		for (Vertex* v : vertices) {
+			vec4 pos = v->position;
+			vec4 normal = v->normal;
+			vec4 color = v->color;
 
-			//copy vec3 data into buffers
-			float* vector_data[VEC_ATTR] = {
-				v->position.data(),
-				v->normal.data(),
-				v->color.data()//hue(PI * (float)counter / ((float)3 * _face_list.size()),0).data()
-			};
+			copy(pos.data(), pos.data() + 4, vbufs[POSITION] + 4 * counter);
+			copy(normal.data(), normal.data() + 4, vbufs[NORMAL] + 4 * counter);
+			copy(color.data(), color.data() + 4, vbufs[COLOR] + 4 * counter);
 
-			for (int i = 0; i < VEC_ATTR; i++) {
-				copy(vector_data[i], vector_data[i] + 3, attribute_buffers[i] + 3 * counter);
-			}
-
-			//copy vertex-face adjacency data
-			//for (face* C : v->adjacent_faces) {
-			//	//attribute_buffers[ADJACENCY][counter * _face_list.size() + _face_indices[C]] = 1.0f;
-			//}
 			counter++;
 		}
 	};
@@ -440,9 +431,9 @@ void Mesh::_findFacesTriangular() {
 	}
 
 	// Validates face by checking if any edges are already visited.  By construction
-	// of this algorithm we will have guaranteed that any preexisting face will have
-	// at least one visited edge.
+	// we guaranteed that any preexisting face will have at least one visited edge.
 	auto validate = [&](Face* F) {
+		//linear search on edges because our graph is essentially planar
 		for (int i = 0; i < F->size(); i++) {
 			Edge* E = F->get(i)->edges.at(F->get((i+1)%(F->size())));
 			if (visited_edges.at(E)) return false;
@@ -500,43 +491,61 @@ void Mesh::_findFacesTriangular() {
 }
 
 void Mesh::_findEdges() {
-	Vertex* start = _vertex_list[0];
-	queue<Vertex*> queue;
-	unordered_set<Vertex*> visited;
+
 	unordered_set<Vertex*> prev_dequeued;
 
-	queue.push(start);
-	visited.insert(start);
-
-	while (!queue.empty()) {
-		Vertex* dequeued = (Vertex*)queue.front();
-		queue.pop();
-		prev_dequeued.insert(dequeued);
-
-		//Mark connections as visited and add unvisited to queue
-		for (Vertex* v : dequeued->connections) {
-			if (prev_dequeued.find(v) == prev_dequeued.end()) {
-				_edge_list.push_back(v->edges.at(dequeued));
+	bft(_vertex_list[0],
+	 	[&](Vertex* v) { //insert each dequeued 
+			prev_dequeued.insert(v);
+			return;
+		},
+		[&](Vertex* v, Vertex* w) {
+			if (prev_dequeued.find(w) == prev_dequeued.end()) {
+				_edge_list.push_back(w->edges.at(v));
 			}
-
-			//Only queue the vertex if insert() returns true for new element insertion
-			bool new_insertion = visited.insert(v).second;
-
-			if (new_insertion) {
-				queue.push(v);
-
-			}
+			return;
 		}
-
-	}
+	 );
 }
 
 
 
-void Mesh::colorCurvature() {
-	for (Vertex* v : this->_vertex_list) {
-		v->color = red_blue_hue(6.0f * discrete_laplacian(v));
+void Mesh::colorCurvature(float angle) {
+	int i = 0;
+
+	auto eval = [&](Vertex* v, float* mem) {
+		float l = discrete_laplacian(v);
+		vec4 newcolor = sin(angle)*vec3{cos(l),sin(l),0} + vec3{0,0,cos(angle)};
+		v->color = newcolor;
+		for (int k = 0; k < 4; k++) {
+			mem[i] = *newcolor[k];
+			i++;
+		}
+	};
+
+	float* mem;
+	glBindBuffer(GL_ARRAY_BUFFER, (_vbos)[COLOR]);
+	mem = (float*)glMapBufferRange(GL_ARRAY_BUFFER, 0,this->vPrimitives()*_vbo_primitives[COLOR] * sizeof(float), GL_MAP_WRITE_BIT);
+
+	switch (_type) {
+		case TRIANGLE:
+			for (Face* E: this->_face_list) {
+				for (Vertex* v : E->vertexArray()) {
+					eval(v,mem);
+				}	
+			}
+		break;
+			
+		case LINE:
+			for (Edge* E: this->_edge_list) {
+				for (Vertex* v : E->vertexArray()) {
+					eval(v,mem);
+				}	
+			}
+		break;
 	}
+
+	glUnmapBuffer(GL_ARRAY_BUFFER);
 }
 
 void Mesh::computeNormals()
