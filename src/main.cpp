@@ -18,7 +18,7 @@ using mat3 = matrix<3, 3, GLfloat>;
 #define WINDOW_HEIGHT 1080	
 #define WINDOW_WIDTH 1920
 
-#define NPARTS 30
+#define NPARTS 20
 
 void set_ball_positions(Mesh** balls, Particles* particles) {
 	float* positions; 
@@ -32,14 +32,14 @@ void set_ball_positions(Mesh** balls, Particles* particles) {
 	glUnmapBuffer(GL_ARRAY_BUFFER);
 }
 
-//This is a small example program where I graph part of the imaginary of a mobius
-//transformation on a disk in the complex plane.
-class particleSimulation : public BaseViewWindow {
+/*
+	
+*/
+class ParticleSimulation : public BaseViewWindow {
 protected:
 	void _main() {
 		_main_shader = ShaderProgram("../shader/vertex.glsl", "../shader/frag.glsl");
-		ComputeShader compute = ComputeShader("../shader/gravity.glsl");
-
+		ComputeShader gravity_collision = ComputeShader("../shader/gravity.glsl");
 
 		Particles parts(NPARTS,vec3{3,3,3});
 
@@ -58,8 +58,6 @@ protected:
 			balls[i]->colorCurvature(PI/3*(float)(i+2)/NPARTS);
 		} 
 		
-		
-		parts.setMode(GL_LINE_LOOP);
 		//main loop
 		glfwSetTime(0);
 		while (!glfwWindowShouldClose(_window)) {
@@ -69,9 +67,9 @@ protected:
 			_main_shader.setUniform("nPoints",NPARTS);
 
 			set_ball_positions(balls, &parts);
-			parts.update(compute);
+			parts.update(gravity_collision,{64,16,1});
 
-			//parts.draw(_main_shader);
+			parts.draw(_main_shader);
 
 			for (int i = 0; i< NPARTS; i++) {
 				balls[i]->draw(_main_shader);
@@ -82,7 +80,7 @@ protected:
 		}
 
 		for (int i = 0; i < NPARTS; i++) {
-			//balls[i]->~Mesh();
+			balls[i]->~Mesh();
 		}
 		delete[] balls;
 	}
@@ -90,14 +88,14 @@ protected:
 	
 public:
 	float part_size = 1;//radius of each particle
-	particleSimulation(int width, int height) : BaseViewWindow(width, height){}
+	ParticleSimulation(int width, int height) : BaseViewWindow(width, height){}
 };
 
 
 int main() {
 	std::cout << "Welcome.\n\n";
 
-	particleSimulation  window(WINDOW_WIDTH, WINDOW_HEIGHT);
+	ParticleSimulation  window(WINDOW_WIDTH, WINDOW_HEIGHT);
 
 	std::string command;
 

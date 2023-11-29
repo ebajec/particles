@@ -56,7 +56,7 @@ float t_collide(vec3 x1,vec3 x2, vec3 v1, vec3 v2, float rc) {
 
 float dt = delta;
 float r_collide = 1;
-float G = 0.05;
+float G = 0.09;
 
 //void handle_collision(uint idx, uint idy, float dist, vec3 r) {
 //    vec3 u = r/dist;
@@ -119,9 +119,7 @@ void main() {
             //positions[idy] += 0.5*(diff/dist) * r;
         }
 
-        //I'm not using gravity for testing purposes
         accelerations[idx] -= (G/(dist*dist))*r; 
-           
     }
 
     barrier();

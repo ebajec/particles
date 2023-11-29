@@ -34,6 +34,14 @@ vec3 lorenz(vec3 pos, float sigma, float rho, float beta) {
     return vec3(sigma*(pos.y-pos.x),pos.x*(rho - pos.z) - pos.y,pos.x*pos.y - beta*pos.z);
 }
 
+vec3 system(vec3 pos) {
+    return vec3(
+        pos.x*(1+pos.z/10.0f- pos.y),
+        pos.z*(3.0f/4.0f - pos.y - 0.5f*pos.x),
+        pos.y*(pos.x-5*pos.z)
+    );
+}
+
 
 void main() {
     vec3 new_acc = vec3(0,0,0);
@@ -44,12 +52,12 @@ void main() {
         return;
     }
 
-    float dt = 0.001*delta;
+    float dt = 0.01*delta;
     vec3 pos = positions[idx];
     vec3 vel = velocities[idx];
     vec3 acc = accelerations[idx];
 
-    vec3 l = lorenz(pos,10,10,8/3);
+    vec3 l = system(pos);//lorenz(pos,10,10,8/3);
 
     positions[idx] += dt*vel;
     velocities[idx] = l;

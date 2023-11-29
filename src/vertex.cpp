@@ -116,15 +116,13 @@ size_t VertexRelation::Hasher::operator () (const VertexRelation* E) const {
 Face::Face(std::initializer_list<Vertex*> args) {
 	this->_vertices = vector<Vertex*>(args.size());
 	this->edges = vector<Edge*>(args.size());
-	
 	{int i = 0; for (Vertex* v : args) {
 		_vertices[i] = v;
 		v->faces.insert(this);
 		i++;
 	}}
 
-
-	for (int i = 0; i < this->size(); i++) {
+	for (int i = 0; i < args.size(); i++) {
 		Vertex* v = _vertices[i];
 		for (Vertex* w : v->connections) {
 			if (w == _vertices[modulo(i+1,this->size())]) {

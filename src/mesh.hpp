@@ -509,7 +509,13 @@ void Mesh::_findEdges() {
 }
 
 
-
+/**
+ * @brief Colors vertices of mesh based on average difference of each vertex from
+ * its neighbors. The color should change with the sharpness of the mesh, depending 
+ * on how it is connected.  
+ * 
+ * @param angle offset for the color
+ */
 void Mesh::colorCurvature(float angle) {
 	int i = 0;
 

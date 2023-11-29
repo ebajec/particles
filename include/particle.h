@@ -16,7 +16,7 @@ class Particles : public GLBufferWrapper<PART_VBOS,PART_SSBOS> {
 public:
     Particles(int count,vec3 bound = vec3{1,1,1});
     
-    void update(ComputeShader shader);
+    void update(ComputeShader shader,matrix<1,3,int> groups);
     void draw_trails(ShaderProgram shader);
 
     double t_o = 0;

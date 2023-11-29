@@ -32,9 +32,24 @@ Particles::Particles(int count,vec3 bound) : GLBufferWrapper<PART_VBOS,PART_SSBO
 	this->initBuffers(GL_STREAM_DRAW);
 }
 
-void Particles::update(ComputeShader shader)
+/**
+ * @brief Run specified compute shader on particle data.
+ * 
+ * SSBO bindings are arranged as follows:
+ * 
+ * binding 0: positions
+ * binding 1: velocities
+ * binding 2: accelerations
+ * binding 3: colors
+ * binding 4: collision data (doesn't do anything right now, but I might need to 
+ * keep track of them later)
+ * 
+ * @param shader ComputeShader instance
+ * @param groups Work groups
+ */
+void Particles::update(ComputeShader shader,matrix<1,3,int> groups)
 {
-	//set up for compute shader
+	//set up bindings on GPU
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER,0,_vbos[POS]);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER,1,_ssbo[VEL]);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER,2,_ssbo[ACC]);
@@ -48,17 +63,14 @@ void Particles::update(ComputeShader shader)
 	shader.setUniform("delta",(float)(0.1) );
 	shader.setUniform("t", (float)(t));
 
-	glDispatchCompute((int)(_count+63) / 64, (int)(_count+15) / 16, 1);
+	glDispatchCompute(
+		(_count+*groups[0]-1) / (*groups[0]),
+		(_count+*groups[1]-1) / (*groups[1]), 
+		1//(_count+*groups[2]-1) / (*groups[2])
+	);
+
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 	glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
-
-	//float* mem;
-	//glBindBuffer(GL_SHADER_STORAGE_BUFFER, (_ssbo)[COLLISION]);
-	//mem = (float*)glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, ssboBufSize(COLLISION) * sizeof(float), GL_MAP_WRITE_BIT);
-	//for (int i = 0; i < ssboBufSize(COLLISION); i++) {
-	//	mem[i] = 0.0f;
-	//}
-	//glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
 	return;
 }
@@ -72,13 +84,14 @@ vec3 random_in_bounds(vec3 bound) {
 }
 
 
+//these are just random configurations for generating points
 inline vec3 point_ball(float r) {
-	return Sphere(r)(gaussian(PI/2,PI/5),gaussian(PI,PI));
+	return Sphere(r*gaussian(0.9,0.05))(gaussian(PI/2,PI/5),gaussian(PI,PI));
 }
 
 inline vec3 i_torus(float rhole,float rtube, int i,int n) {
 	float s = (2*PI*i)/n;
-	float t = PI;
+	float t = (PI*i)/(2.0f*n);
 	return Torus(rhole,rtube)(s,t);
 }
 
@@ -92,18 +105,10 @@ void Particles::_load(float **vbufs,float **sbufs)
 	vector<vec3> points(_count);
 	vector<vec3> vels(_count);
 
-	//points[0] = vec3{5,1,0};
-	//points[1] = vec3{-5,1,0};
-	//points[2] = vec3{1,-10,0};
-//
-	//vels[0] = vec3{-0.005,0,0};
-	//vels[1] = vec3{0.002,0,0};
-	//vels[2] = vec3{0,0.005,0};
-
 	//fill buffers with random points
 	for (int i = 0; i < this->vPrimitives(); i++) {
-		vec3 point = i_torus(30.0f,5.0f,i,vPrimitives());
-		vec4 vel = vec3{0,0,0};//vels[i];
+		vec3 point = point_ball(15.0f);//i_torus(30.0f,5.0f,i,vPrimitives());
+		vec4 vel = vec3{0,0,0};
 
 		for (int k = 0; k < 4; k++) {
 			int ind = 4*i + k;
