@@ -1,5 +1,5 @@
 # particles
-I made a renderer for meshes and now I'm using it for particles.   
+I made a renderer for meshes and now I'm using it for particles.  The shader named "gravity" lets them collide with each other and experience attractive forces.  The "system" one can be used to mess around with dynamical systems.
 
 **To compile:** In the solution file or makefile, make sure to include a path to "lib" folder from [this repository](https://github.com/ebajec/linear-algebra) as an include directory— this uses the matrix class I made there.  Also, make sure that GLEW and GLFW are installed and properly linked in CMakeLists.txt. I have included the headers and some of the binaries for portability purposes.
 
