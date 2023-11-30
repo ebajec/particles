@@ -54,8 +54,8 @@ void main() {
         0,1,-1);
 
     positions[idx] += dt*vel;
-    velocities[idx] += A*pos;
-    accelerations[idx] = A*pos/dot(pos,pos);
+    velocities[idx] = A*pos;
+    //accelerations[idx] = A*pos/dot(pos,pos);
 
     float c = sigmoid(dot(vel,vel)/10);
     colors[idx] =vec3(c,c,c);
