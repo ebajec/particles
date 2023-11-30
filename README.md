@@ -5,7 +5,7 @@ Simulates a bunch of particles.  The shader named "gravity" lets them collide wi
 
 **How to use:** Once the program has opened, type "launch" in the console window to launch the scene. There are a few other commands, and I will probably add more.  To control the camera, use WASD and the mouse.  There is currently an odd bug which causes the orientation of the controls to go crazy.  This is very bad on linux for some reason.  
 
-**Issues:** Frequently, the sphere around the particles will not render.  This is likely related to the fact that current version usues actual sphere meshes around the particles. I will soon fix this by drawing the balls around particles in a separate shader.   
+**Issues:** Frequently, the sphere around the particles will not render.  This is likely related to the fact that current version usues actual sphere meshes around the particles. I will soon fix this by drawing the balls around particles in a separate shader.  The collision could also be improved, but it works well enough.
 
 *close:* closes the scene being rendered.
 
