@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef DRAWABLE_H
-#define DRAWABLE_H
+#ifndef BUFWRAPPER_H
+#define BUFWRAPPER_H
 
 #include "GL/glew.h"
 #include "shader.h"
@@ -29,10 +29,13 @@ public:
 	// IMPORTANT: glUnmapBuffer(buffer object) MUST be called afterwards
 	void openBuffer(float** out, GLuint buffer_object, int loc, GLuint access);
 
-	//Number of individual points in vertex array, i.e, the shaders will
-	//run this many times.
-	virtual unsigned long vPrimitives() { return 0; }
-	unsigned long ssboBufSize(int buffer){return _ssbo_sizes[buffer]*_ssbo_primitives[buffer];}
+	// @return Number of points in vertex array
+	size_t arraySize() { return _array_size; }
+
+	//Size of buffer in number of floating point values. 
+	//@param binding index of vertex buffer object to be sized
+	size_t vboBufSize(int location) { return _array_size * _vbo_primitives[location]; }
+	size_t ssboBufSize(int location) { return _ssbo_sizes[location] * _ssbo_primitives[location];}
 
 protected:
 	//identifies each binding with location in vertex array.  Only really needed
@@ -40,11 +43,14 @@ protected:
 	int _vbo_layout[nVBO];
 	int _ssbo_layout[nSSBO];
 
-	//Size of vPrimitives for each binding, in number of floating point values.  NOT size in bytes.
-	//ex: if binding 0 was a 3D position, _primitive_sizes[0] = 1. 
 	int _vbo_primitives[nVBO];
 	int _ssbo_primitives[nSSBO];
-	int _ssbo_sizes[nSSBO];
+
+	// Size of vertex array in number of objects
+	size_t _array_size;
+
+	// Size of each SSBO in number of objects, i.e., (bytes)/(primtive_size)
+	size_t _ssbo_sizes[nSSBO];
 
 	//transformation applied to vertices in vertex shader
 	mat4 _model;
@@ -56,10 +62,7 @@ protected:
 	GLuint _vbos[nVBO];
 	GLuint _ssbo[nSSBO];
 
-	//Size of buffer in number of floating point values.  NOT size in bytes.
-	//If the position buffer had 100 points, this would be 100 for.
-	//@param binding index of vertex buffer object to be sized
-	size_t std430BufSize(int location) { return vPrimitives() * 4; }
+	
 
 	//define layout map and primitive sizes here
 	virtual void _init() = 0;
@@ -72,6 +75,6 @@ protected:
 
 
 
-#include "drawable.hpp"
+#include "bufwrapper.hpp"
 
 #endif

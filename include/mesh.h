@@ -6,7 +6,7 @@
 #include <vector>
 #include <map>
 #include <GL/glew.h>
-#include "drawable.h"
+#include "bufwrapper.h"
 #include "vertex.h"
 #include "matrix.h"
 #include "shapes.h"
@@ -46,7 +46,7 @@ public:
 	//taking a Vertex pointer.
 	template<typename func> void transformVertices(func F);
 
-	unsigned long vPrimitives();
+	unsigned long arraySize();
 
 	const list<Face*> faces() {return _face_list;}
 	const list<Edge*> edges() {return _edge_list;}

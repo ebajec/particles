@@ -58,21 +58,6 @@ float dt = delta;
 float r_collide = 1;
 float G = 0.09;
 
-//void handle_collision(uint idx, uint idy, float dist, vec3 r) {
-//    vec3 u = r/dist;
-//
-//    vec3 uproj1x = u*dot(velocities[idx],u);
-//    vec3 uproj2x = u*dot(velocities[idy],u);
-//
-//    vec3 uproj1y = velocities[idx] - uproj1x;
-//    vec3 uproj2y = velocities[idy] - uproj2x;
-//
-//    velocities[idx] = 0.8*(uproj1y + uproj2x);
-//    velocities[idy] = 0.8*(uproj2y + uproj1x);
-//    
-//    return;
-//}
-
 void main() {
     uint idx = gl_GlobalInvocationID.x;
     uint idy = gl_GlobalInvocationID.y;

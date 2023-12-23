@@ -1,7 +1,8 @@
 #version 430 core
 
-uniform int nPoints;
-uniform float delta;
+uniform uint NPARTS;
+uniform uint STEPS;
+uniform uint offset;
 uniform float t;
 
 layout(local_size_x = 256,local_size_y = 1,local_size_z = 1) in;
@@ -14,56 +15,80 @@ layout(std430, binding = 1) buffer Velocities{
     vec3 velocities[];
 };
 
-layout(std430, binding = 2) buffer Accelerations{
-    vec3 accelerations[];
-};
-
-layout(std430, binding = 3) buffer Color{
-    vec3 colors[];
+layout(std430, binding = 2) buffer Colors{
+    vec4 colors[];
 };
 
 float sigmoid(float x ){
     return 1/(1+exp(-x));
 }
 
-vec3 circ(float s) {
-    return vec3(cos(s-t/2),0,sin(s-t/2));
-}
-
-vec3 lorenz(vec3 pos, float sigma, float rho, float beta) {
+// Lorenz attractor
+float sigma = 10;
+float rho = 28;
+float beta = 8/5;
+vec3 lorenz(vec3 pos) {
     return vec3(sigma*(pos.y-pos.x),pos.x*(rho - pos.z) - pos.y,pos.x*pos.y - beta*pos.z);
 }
 
-vec3 system(vec3 pos) {
+float a = 36;
+float b = 3;
+float c = 20;
+
+// Rossler attractor
+vec3 f(vec3 pos) {
     return vec3(
-        pos.x*(1+pos.z/10.0f- pos.y),
-        pos.z*(3.0f/4.0f - pos.y - 0.5f*pos.x),
-        pos.y*(pos.x-5*pos.z)
+        -pos.y - pos.z,
+        pos.x + a*pos.y,
+        b + pos.z*(pos.x-c)
+    );
+}
+
+// Multiscroll attractor
+vec3 g(vec3 pos) {
+    return vec3(
+        a*(pos.y - pos.x),
+        pos.x - pos.x*pos.z + c*pos.y - 15.15,
+        pos.x*pos.y  - b*pos.z
     );
 }
 
 
-void main() {
-    vec3 new_acc = vec3(0,0,0);
+vec3 RK4(vec3 x_0, float dt) {
+    vec3 k_1 = lorenz(x_0);
+    vec3 k_2 = lorenz(x_0 + dt*k_1/2);
+    vec3 k_3 = lorenz(x_0 + dt*k_2/2);
+    vec3 k_4 = lorenz(x_0 + dt*k_3);
 
+    return x_0 + dt*(k_1 + 2*k_2 + 2*k_3 + k_4)/6;
+}
+
+float timestep = 0.006;
+
+void main() {
     uint idx = gl_GlobalInvocationID.x;
 
-    if (idx >= nPoints) {
+    if (idx > NPARTS) {
         return;
     }
 
-    float dt = 0.01*delta;
-    vec3 pos = positions[idx];
-    vec3 vel = velocities[idx];
-    vec3 acc = accelerations[idx];
+    uint ind = idx*(STEPS+1);
+    uint cur = offset%STEPS;
+    uint next = (offset+1)%STEPS;
 
-    vec3 l = system(pos);//lorenz(pos,10,10,8/3);
+    vec3 vel = lorenz(positions[ind + cur]);
 
-    positions[idx] += dt*vel;
-    velocities[idx] = l;
+    colors[ind+cur].w = t;
+    float c = sigmoid((sqrt(dot(vel,vel))/30-3));
+    colors[ind+cur].xyz = vec3(1-c,1-c,1);
 
-    float c = sigmoid(dot(acc,acc)/100);
-    colors[idx] =vec3(c,0,c/2);
+    positions[ind + next] = RK4(positions[ind+cur],timestep);
+
+    // Store current position at end of trail buffer if the offset has
+    // reset to zero. This allows trails to be drawn continuously.
+    if (next == 0) {
+        positions[ind + STEPS] = positions[ind + cur];
+    }
 
 }
 

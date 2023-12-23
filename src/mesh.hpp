@@ -260,7 +260,7 @@ void Mesh::center() {
 	}
 }
 
-unsigned long Mesh::vPrimitives() {
+unsigned long Mesh::arraySize() {
 	switch (_type) {
 	case LINE:
 		return 2 * _edge_list.size();
@@ -276,8 +276,8 @@ template<typename func>
 void Mesh::transformCPU(VERTEX_ATTRIBUTE attribute,func F) {
 	float* mem;
 	glBindBuffer(GL_ARRAY_BUFFER, (_vbos)[attribute]);
-	mem = (float*)glMapBufferRange(GL_ARRAY_BUFFER, 0, this->vPrimitives()*_vbo_primitives[attribute] * sizeof(float), GL_MAP_WRITE_BIT);
-	F(mem,this->vPrimitives()*_vbo_primitives[attribute]);
+	mem = (float*)glMapBufferRange(GL_ARRAY_BUFFER, 0, this->arraySize()*_vbo_primitives[attribute] * sizeof(float), GL_MAP_WRITE_BIT);
+	F(mem,this->arraySize()*_vbo_primitives[attribute]);
 	glUnmapBuffer(GL_ARRAY_BUFFER);
 }
 
@@ -299,7 +299,7 @@ void Mesh::transformPositionsCPU(func F)
 
 	float* mem;
 	glBindBuffer(GL_ARRAY_BUFFER, (_vbos)[POSITION]);
-	mem = (float*)glMapBufferRange(GL_ARRAY_BUFFER, 0,this->vPrimitives()*_vbo_primitives[POSITION] * sizeof(float), GL_MAP_WRITE_BIT);
+	mem = (float*)glMapBufferRange(GL_ARRAY_BUFFER, 0,this->arraySize()*_vbo_primitives[POSITION] * sizeof(float), GL_MAP_WRITE_BIT);
 
 	switch (_type) {
 		case TRIANGLE:
@@ -531,7 +531,7 @@ void Mesh::colorCurvature(float angle) {
 
 	float* mem;
 	glBindBuffer(GL_ARRAY_BUFFER, (_vbos)[COLOR]);
-	mem = (float*)glMapBufferRange(GL_ARRAY_BUFFER, 0,this->vPrimitives()*_vbo_primitives[COLOR] * sizeof(float), GL_MAP_WRITE_BIT);
+	mem = (float*)glMapBufferRange(GL_ARRAY_BUFFER, 0,this->arraySize()*_vbo_primitives[COLOR] * sizeof(float), GL_MAP_WRITE_BIT);
 
 	switch (_type) {
 		case TRIANGLE:

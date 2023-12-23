@@ -77,6 +77,10 @@ void ShaderProgram::setUniform(const char* name, int value)
 	glUniform1i(this->getUniform(name), value);
 }
 
+void ShaderProgram::setUniform(const char* name, unsigned int value) {
+	glUniform1ui(this->getUniform(name), value);
+}
+
 void ShaderProgram::setUniform(const char* name, float value)
 {
 	glUniform1f(this->getUniform(name), value);

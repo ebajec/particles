@@ -2,39 +2,38 @@
 #define PARTICLE_H
 
 #include <GLFW/glfw3.h> 
-#include "drawable.h"
+#include "bufwrapper.h"
 #include "misc.h"
 
-enum PART_VBO_ATTR {POS,COL};
-enum PART_SSBO_ATTR {VEL,ACC,COLLISION};
-enum DIST_TYPE {RAND, FUNC};
+enum PART_VBO_ATTR {PART_POS,PART_COLOR};
+enum PART_SSBO_ATTR {PART_VEL};
 
 #define PART_VBOS 2
-#define PART_SSBOS 3
+#define PART_SSBOS 1
+#define NSTEPS 101
 
 class Particles : public GLBufferWrapper<PART_VBOS,PART_SSBOS> {
 public:
-    Particles(int count,vec3 bound = vec3{1,1,1});
+    Particles(int count);
     
     void update(ComputeShader shader,matrix<1,3,int> groups);
-    void draw_trails(ShaderProgram shader);
+    void draw(ShaderProgram shader);
 
     double t_o = 0;
 private:
     void _init();
 
-    unsigned long vPrimitives(){return _count;}
-
-    
     void _load(float** vbufs,float** sbufs);
 
-    //top right corner of bounding box
-    vec3 _bound;
+    // Current timestep in loop
+    int offset = 0;
 
     //number of points
-    size_t _count;
+    size_t nparts;
     
-    //previous time instance.
+    //Used when calling glMultiDrawArrays to specify sizes of trails.
+    int* _stepcounts;
+    int* _firsts;
     
 };
 

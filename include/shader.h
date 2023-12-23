@@ -18,6 +18,7 @@ public:
 	void use() const { glUseProgram(program); }
 
 	void setUniform(const char* name, int value);
+	void setUniform(const char* name, unsigned int value);
 	void setUniform(const char* name, float value);
 	void setUniform(const char* name, vec3 value);
 	void setUniform(const char* name, mat3 value, GLboolean transpose);

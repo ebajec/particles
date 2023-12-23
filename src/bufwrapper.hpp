@@ -1,7 +1,7 @@
-#ifndef DRAWABLE_HPP
-#define DRAWABLE_HPP
+#ifndef BUFWRAPPER_HPP
+#define BUFWRAPPER_HPP
 
-#include "drawable.h"
+#include "bufwrapper.h"
 
 template<int nVBO, int nSSBO>
 void GLBufferWrapper<nVBO,nSSBO>::draw(ShaderProgram shader,int count)
@@ -9,7 +9,7 @@ void GLBufferWrapper<nVBO,nSSBO>::draw(ShaderProgram shader,int count)
 	glUseProgram(shader.program);
 	shader.setUniform("geom_model", _model, GL_TRUE);
 	glBindVertexArray(_vao);
-	glDrawArrays(_draw_mode, 0, vPrimitives());
+	glDrawArrays(_draw_mode, 0, arraySize());
 	shader.setUniform("geom_model", mat4::id(), GL_FALSE);
 }
 
@@ -19,7 +19,7 @@ void GLBufferWrapper<nVBO, nSSBO>::openBuffer( float** out,GLuint buffer_object,
     float* mem;
 	GLuint buf;
 	size_t bufsize;
-	int n = this->vPrimitives();
+	int n = this->arraySize();
 
 	if (loc > nVBO || loc > nSSBO) throw invalid_argument("Buffer location out of range");
 	//if (*range[1]*(*range[0]) < 0 || *range[0] > *range[1]) throw invalid_argument("Invalid range");
@@ -30,7 +30,7 @@ void GLBufferWrapper<nVBO, nSSBO>::openBuffer( float** out,GLuint buffer_object,
 	}
 	if (buffer_object == GL_ARRAY_BUFFER) {
 		buf = _vbos[loc];
-		bufsize = this->vPrimitives()*_vbo_primitives[loc] * sizeof(float);
+		bufsize = this->arraySize()*_vbo_primitives[loc] * sizeof(float);
 	}
 	else {
 		throw invalid_argument("Specific buffer is invalid");
@@ -73,7 +73,7 @@ void GLBufferWrapper<nVBO, nSSBO>::initBuffers(GLenum usage)
 	float** sbufs = new float*[nSSBO];
 	
 	for (int i = 0; i < nVBO ; i++) {
-		vbufs[i] = new float[std430BufSize(i)];
+		vbufs[i] = new float[vboBufSize(i)];
 	}
 	for (int i = 0; i < nSSBO; i++) {
 		sbufs[i] = new float[ssboBufSize(i)];
@@ -86,7 +86,7 @@ void GLBufferWrapper<nVBO, nSSBO>::initBuffers(GLenum usage)
 	for (int i = 0; i < nVBO ; i++) {
 		glEnableVertexAttribArray(i);
 		glBindBuffer(GL_ARRAY_BUFFER, _vbos[i]);
-		glBufferData(GL_ARRAY_BUFFER, std430BufSize(i) * sizeof(float), vbufs[i], usage);
+		glBufferData(GL_ARRAY_BUFFER, vboBufSize(i) * sizeof(float), vbufs[i], usage);
 		glVertexAttribPointer(i, 4, GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 

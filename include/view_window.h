@@ -8,7 +8,7 @@
 #include <functional>
 #include "camera.h"
 #include "shader.h"
-#include "drawable.h"
+#include "bufwrapper.h"
 #include <map>
 
 /*Maps or unmaps keys + actions to functions, and holds information regarding the 
