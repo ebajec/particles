@@ -26,14 +26,18 @@ float sigmoid(float x ){
 // Lorenz attractor
 float sigma = 10;
 float rho = 28;
-float beta = 8/5;
+float beta = 2;
 vec3 lorenz(vec3 pos) {
-    return vec3(sigma*(pos.y-pos.x),pos.x*(rho - pos.z) - pos.y,pos.x*pos.y - beta*pos.z);
+    return vec3(
+        sigma*(pos.y-pos.x),
+        pos.x*(rho - pos.z) - pos.y,
+        pos.x*pos.y - beta*pos.z
+    );
 }
 
-float a = 36;
-float b = 3;
-float c = 20;
+float a = 0.2;
+float b = 0.1;
+float c = 5.7;
 
 // Rossler attractor
 vec3 f(vec3 pos) {
@@ -63,12 +67,12 @@ vec3 RK4(vec3 x_0, float dt) {
     return x_0 + dt*(k_1 + 2*k_2 + 2*k_3 + k_4)/6;
 }
 
-float timestep = 0.006;
+float timestep = 0.007;
 
 void main() {
     uint idx = gl_GlobalInvocationID.x;
 
-    if (idx > NPARTS) {
+    if (idx >= NPARTS) {
         return;
     }
 
@@ -78,16 +82,17 @@ void main() {
 
     vec3 vel = lorenz(positions[ind + cur]);
 
-    colors[ind+cur].w = t;
     float c = sigmoid((sqrt(dot(vel,vel))/30-3));
-    colors[ind+cur].xyz = vec3(1-c,1-c,1);
+    colors[ind+cur] = vec4(1-c,1-c,1,t);
 
-    positions[ind + next] = RK4(positions[ind+cur],timestep);
+    vec3 pos_new = RK4(positions[ind+cur],timestep);
+    positions[ind + next] = pos_new;
 
     // Store current position at end of trail buffer if the offset has
     // reset to zero. This allows trails to be drawn continuously.
     if (next == 0) {
-        positions[ind + STEPS] = positions[ind + cur];
+        positions[ind + STEPS] = pos_new;
+        colors[ind + STEPS] = vec4(1-c,1-c,1,t);
     }
 
 }

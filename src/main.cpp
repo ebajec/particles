@@ -18,9 +18,10 @@ using mat3 = matrix<3, 3, GLfloat>;
 #define WINDOW_HEIGHT 1080	
 #define WINDOW_WIDTH 1920
 
-#define NPARTS 2000
+#define NPARTS 100
 //#define BALLS
 
+#ifdef BALLS
 void set_ball_positions(Mesh** balls, Particles* particles) {
 	float* positions; 
 	particles->openBuffer(&positions,GL_ARRAY_BUFFER,PART_POS,GL_MAP_READ_BIT);
@@ -32,12 +33,13 @@ void set_ball_positions(Mesh** balls, Particles* particles) {
 	}
 	glUnmapBuffer(GL_ARRAY_BUFFER);
 }
+#endif
 
 class ParticleSimulation : public BaseViewWindow {
 protected:
 	void _main() {
 		_main_shader = ShaderProgram("../shader/vertex.glsl", "../shader/frag.glsl");
-		ComputeShader gravity_collision = ComputeShader("../shader/system.glsl");
+		ComputeShader gravity_collision = ComputeShader("../shader/systemfirstorder.glsl");
 
 		Particles parts(NPARTS);
 
@@ -66,7 +68,7 @@ protected:
 			_cam.connectUniforms(_main_shader);
 			_main_shader.setUniform("nPoints",NPARTS);
 
-			parts.update(gravity_collision,{256,1,1});
+			parts.update(gravity_collision,{64,16,1});
 
 			parts.draw(_main_shader);
 			

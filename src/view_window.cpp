@@ -9,8 +9,8 @@ BaseViewWindow::BaseViewWindow(
 	_mapMovementKeys();
 	
 	_cam = Camera(
-		vec3({ 0,0,1 }),
-		vec3({ 0,0,-10 }),
+		vec3({ -1,0,0 }),
+		vec3({ 10,0,0 }),
 		_width,
 		_height,
 		PI / 3);

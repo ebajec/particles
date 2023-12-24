@@ -1,7 +1,8 @@
 #version 430 core
 
-uniform int nPoints;
-uniform float delta;
+uniform uint NPARTS;
+uniform uint STEPS;
+uniform uint offset;
 uniform float t;
 
 layout(local_size_x = 64,local_size_y = 16,local_size_z = 1) in;
@@ -14,25 +15,13 @@ layout(std430, binding = 1) buffer Velocities{
     vec3 velocities[];
 };
 
-layout(std430, binding = 2) buffer Accelerations{
-    vec3 accelerations[];
-};
-
-layout(std430, binding = 3) buffer Color{
+layout(std430, binding = 2) buffer Color{
     vec4 colors[];
 };
 
-layout(std430, binding = 4) buffer Collision{
-    float collisions[];
-};
 
 float sigmoid(float x ){
     return 1/(1+exp(-x));
-}
-
-vec3 attractor(vec3 pos) {
-    vec3 r = vec3(50,0,0) - pos;
-    return (0.0000001/pow(dot(r,r),3/2))*r;
 }
 
 // Considering the paths x1 + t*v1 and x2 + t*v2, we check the first value of t for which
@@ -54,63 +43,66 @@ float t_collide(vec3 x1,vec3 x2, vec3 v1, vec3 v2, float rc) {
     } 
 }
 
-float dt = delta;
-float r_collide = 1;
-float G = 0.09;
+float dt = 0.01;
+float r_collide = 0.5;
+float G = 0.1;
 
 void main() {
     uint idx = gl_GlobalInvocationID.x;
     uint idy = gl_GlobalInvocationID.y;
-    
-    vec3 pos = positions[idx];
-    vec3 vel = velocities[idx];
 
-    velocities[idx] += dt*accelerations[idx];
-    accelerations[idx] = vec3(0,0,0);
+    uint pos_idx = idx*(STEPS+1);
+    uint pos_idy = idy*(STEPS+1);
+
+    uint cur = offset%STEPS;
+    uint next = (offset+1)%STEPS;
 
     //calculate new values
-    if (idy < nPoints && idy != idx)  {
-        vec3 r = positions[idx] - positions[idy];
-        float dist = -1;
-        float tc = t_collide(positions[idx],positions[idy],velocities[idx],velocities[idy],r_collide);
+    if (idy < NPARTS && idy != idx)  {
+        vec3 p1 = positions[pos_idx + cur];
+        vec3 p2 = positions[pos_idy + cur];
+        
+        vec3 r = p1 - p2;
 
+        vec3 v1 = velocities[idx];
+        vec3 v2 = velocities[idy];
+        float dist = -1;
+        float tc = -1;//t_collide(p1,p2,v1,v2,r_collide);
 
         if (tc > 0 && tc < dt ){
+            positions[pos_idx + cur] = p1 + v1*tc;
+            positions[pos_idy + cur] = p2 + v2*tc;
 
-            positions[idx] += velocities[idx]*tc;
-            positions[idy] += velocities[idy]*tc;
-
-            r = positions[idx] - positions[idy];
+            r = positions[pos_idx+cur] - positions[pos_idy+cur];
             dist = sqrt(dot(r,r));
 
             vec3 u = r/dist;
 
-            vec3 uproj1x = u*dot(velocities[idx],u);
-            vec3 uproj2x = u*dot(velocities[idy],u);
+            vec3 uproj1x = u*dot(v1,u);
+            vec3 uproj2x = u*dot(v2,u);
 
-            vec3 uproj1y = velocities[idx] - uproj1x;
-            vec3 uproj2y = velocities[idy] - uproj2x;
+            vec3 uproj1y = v1 - uproj1x;
+            vec3 uproj2y = v2 - uproj2x;
 
-            velocities[idx] = 0.8*(uproj1y + uproj2x);
-            velocities[idy] = 0.8*(uproj2y + uproj1x);
+            velocities[idx] = (uproj1y + uproj2x);
+            velocities[idy] = (uproj2y + uproj1x);
         }
+        vec3 acc = (-G/dot(r,r))*r; 
+        velocities[idx] += dt*acc;
+    }
+    barrier();
 
-        if (dist < 0) dist = sqrt(dot(r,r));
+    colors[pos_idx+cur].w = t;
+    float c = sigmoid((sqrt(dot(velocities[idx],velocities[idx]))/3-3));
+    colors[pos_idx+cur].xyz = vec3(1-c,1-c/2,1);
 
-        //worst case check if balls end up colliding
-        if (dist < 2*r_collide) {
-            float diff = dist - 2*r_collide;
-            positions[idx] -= 0.98*(diff/dist) * r;
-            //positions[idy] += 0.5*(diff/dist) * r;
-        }
+    positions[pos_idx + next] = positions[pos_idx + cur] + dt*velocities[idx];
 
-        accelerations[idx] -= (G/(dist*dist))*r; 
+    if (next == 0) {
+        positions[pos_idx + STEPS] = positions[pos_idx + next];
     }
 
-    barrier();
-    positions[idx] += dt*velocities[idx];
-
-    if (idx >= nPoints) {
+    if (idx >= NPARTS) {
         return;
     }
 }

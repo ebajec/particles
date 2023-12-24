@@ -19,7 +19,7 @@ Particles::Particles(int count) : GLBufferWrapper<PART_VBOS,PART_SSBOS>(){
 	_init();
 	this->nparts = count;
 	this->_array_size = nparts*NSTEPS;
-	this->_ssbo_sizes[PART_VEL] = nparts*NSTEPS;
+	this->_ssbo_sizes[PART_VEL] = nparts;
 
 	_stepcounts = new int[2*nparts];
 	_firsts = new int[2*nparts];
@@ -57,18 +57,20 @@ void Particles::update(ComputeShader shader,matrix<1,3,int> groups)
 
 	glDispatchCompute(
 		(nparts+*groups[0]-1) / (*groups[0]),
-		1,//(nparts+*groups[1]-1) / (*groups[1]), 
+		(nparts+*groups[1]-1) / (*groups[1]), 
 		1//(_count+*groups[2]-1) / (*groups[2])
 	);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 	glMemoryBarrier(GL_VERTEX_ATTRIB_ARRAY_BARRIER_BIT);
+
 	this->offset++;
+
 	if (this->offset >= NSTEPS-1) 
 		this->offset = 0;
 
 	for (int i = 0; i < nparts; i++) {
 		_stepcounts[2*i] = offset;
-		_stepcounts[2*i + 1] = NSTEPS - 1 - offset;
+		_stepcounts[2*i + 1] = NSTEPS - offset - 1;
 		
 		_firsts[2*i] = i*NSTEPS;
 		_firsts[2*i+1] = i*NSTEPS + offset + 1;
@@ -115,16 +117,19 @@ void Particles::_load(float **vbufs,float **sbufs)
 
 	//fill buffers with random points
 	// array contains nparts*NSTEPS 
+	int M = sqrt(nparts);
 	for (int i = 0; i < this->nparts; i++) {
-		vec4 point = point_ball(300.0f);//+vec3{100,0,0};
-		//vec4 vel = vec3{1,0,0};
-		vec4 color = vec3{0.4,0.2,1};
+		vec4 point = Sphere(3.0f)(2*i*PI/nparts,0);
+		vec4 vel = (10/sqrt(dot(point,point)))*rotateyz<GLfloat>(PI/2)*vec3(point);
+		vec4 color = vec3{1,1,1};
 
 		for (int k = 0; k < 4*NSTEPS; k++) {
 			int ind = 4*NSTEPS*i + k;
 			vbufs[PART_POS][ind] = *point[k%4];
-			sbufs[PART_VEL][ind] = 0;//*vel[k%4];
 			vbufs[PART_COLOR][ind] = *color[k%4];
+		}
+		for (int k = 0; k < 4; k++) {
+			sbufs[PART_VEL][4*i + k] = *vel[k];
 		}
 	}
 	return;
