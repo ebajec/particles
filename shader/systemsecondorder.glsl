@@ -35,16 +35,17 @@ vec3 lorenz(vec3 pos) {
     );
 }
 
-float a = 1;
-float b = 0.01;
-float c = 0.01;
+
+float a = 0.3; //damping term
+float b = 0.2*sin(t);
+float c = 0.2*(cos(t));
 
 //cool looking thing
 vec3 g(vec3 pos) {
     return mat3(
         -a,          -b*pos.z,     c*pos.y,
-        b*pos.z,     -a/3, b*pos.x,
-       -c*pos.y,     -b*pos.x,    -a
+        b*pos.z,     -a, b/4*pos.x,
+       -c*pos.y,     -b/4*pos.x,    -a
     )*pos;
 }
 
@@ -61,18 +62,17 @@ vec3 RK4(vec3 x_0, float dt) {
 float timestep = 0.01;
 
 
-void update_trail(uint ind, uint cur, uint next, vec3 new_pos) {
-    positions[ind + next] = new_pos;
+void update_trail(uint ind, uint cur, uint next, vec3 pos_new) {
+    positions[ind + next] = pos_new;
 
-    colors[ind+cur].w = t;
     float c = sigmoid((sqrt(dot(velocities[gl_GlobalInvocationID.x],velocities[gl_GlobalInvocationID.x]))/10-1));
-    colors[ind+cur].xyz = vec3(1-c/4,1-c,c);
+    colors[ind+cur] = vec4(1-c/4,1-c,c,t);
 
     // Store current position at end of trail buffer if the offset has
     // reset to zero. This allows trails to be drawn continuously.
     if (next == 0) {
-        positions[ind + STEPS] = positions[ind + next];
-        colors[ind + STEPS].xyz = vec3(1-c,1-c,1);
+        positions[ind + STEPS] = pos_new;
+        colors[ind+ STEPS] = vec4(1-c/4,1-c,c,t);
     }
 }
 

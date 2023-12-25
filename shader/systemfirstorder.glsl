@@ -69,6 +69,20 @@ vec3 RK4(vec3 x_0, float dt) {
 
 float timestep = 0.007;
 
+void update_trail(uint ind, uint cur, uint next, vec3 pos_new) {
+    positions[ind + next] = pos_new;
+
+    float c = sigmoid((sqrt(dot(velocities[gl_GlobalInvocationID.x],velocities[gl_GlobalInvocationID.x]))/10-1));
+    colors[ind+cur] = vec4(1-c/4,1-c,c,t);
+
+    // Store current position at end of trail buffer if the offset has
+    // reset to zero. This allows trails to be drawn continuously.
+    if (next == 0) {
+        positions[ind + STEPS] = pos_new;
+        colors[ind+ STEPS] = vec4(1-c/4,1-c,c,t);
+    }
+}
+
 void main() {
     uint idx = gl_GlobalInvocationID.x;
 
@@ -85,15 +99,7 @@ void main() {
     float c = sigmoid((sqrt(dot(vel,vel))/30-3));
     colors[ind+cur] = vec4(1-c,1-c,1,t);
 
-    vec3 pos_new = RK4(positions[ind+cur],timestep);
-    positions[ind + next] = pos_new;
-
-    // Store current position at end of trail buffer if the offset has
-    // reset to zero. This allows trails to be drawn continuously.
-    if (next == 0) {
-        positions[ind + STEPS] = pos_new;
-        colors[ind + STEPS] = vec4(1-c,1-c,1,t);
-    }
+    update_trail(ind,cur,next,RK4(positions[ind+cur],timestep));
 
 }
 

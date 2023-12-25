@@ -83,8 +83,16 @@ void Particles::draw(ShaderProgram shader) {
 	shader.use();
 	shader.setUniform("geom_model", _model, GL_TRUE);
 	shader.setUniform("t",(float)glfwGetTime());
+
+	
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDepthMask(GL_FALSE);
+
 	glBindVertexArray(_vao);
 	glMultiDrawArrays(GL_LINE_STRIP, _firsts,_stepcounts,2*nparts);
+
+	glDepthMask(GL_TRUE);
 	shader.setUniform("geom_model", mat4::id(), GL_FALSE);
 }
 
@@ -98,12 +106,13 @@ vec3 random_in_bounds(vec3 bound) {
 
 //these are just random configurations for generating points
 inline vec3 point_ball(float r) {
-	return Sphere(r*gaussian(0.6,0.2))(gaussian(PI/2,PI/5),gaussian(PI,PI));
+	return Sphere(r*gaussian(0.8,0.1))(gaussian(PI/2,PI/5),gaussian(PI,PI));
 }
 
 inline vec3 i_torus(float rhole,float rtube, int i,int n) {
+	int M = sqrt(n);
 	float s = (2*PI*i)/n;
-	float t = (PI*i)/(2.0f*n);
+	float t = (PI*(i%M))/M;
 	return Torus(rhole,rtube)(s,t);
 }
 
@@ -119,8 +128,8 @@ void Particles::_load(float **vbufs,float **sbufs)
 	// array contains nparts*NSTEPS 
 	int M = sqrt(nparts);
 	for (int i = 0; i < this->nparts; i++) {
-		vec4 point = Sphere(3.0f)(2*i*PI/nparts,0);
-		vec4 vel = (10/sqrt(dot(point,point)))*rotateyz<GLfloat>(PI/2)*vec3(point);
+		vec4 point = Sphere(5.0f)(2*i*PI/nparts,i*(PI/4));
+		vec4 vel = (1/dot(point,point))*rotatexz<GLfloat>(PI/2)*vec3(point);
 		vec4 color = vec3{1,1,1};
 
 		for (int k = 0; k < 4*NSTEPS; k++) {

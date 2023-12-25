@@ -18,47 +18,16 @@ using mat3 = matrix<3, 3, GLfloat>;
 #define WINDOW_HEIGHT 1080	
 #define WINDOW_WIDTH 1920
 
-#define NPARTS 100
-//#define BALLS
-
-#ifdef BALLS
-void set_ball_positions(Mesh** balls, Particles* particles) {
-	float* positions; 
-	particles->openBuffer(&positions,GL_ARRAY_BUFFER,PART_POS,GL_MAP_READ_BIT);
-	for (int i = 0; i < NPARTS; i++) {
-		vec4 pos = vec4(positions + 4*i) + vec4{0,0,0,1};
-		balls[i]->setModel((mat3::id()|vec3(0.0f)).transpose()|pos);
-		//pos.print();std::cout << "\n";
-		
-	}
-	glUnmapBuffer(GL_ARRAY_BUFFER);
-}
-#endif
+#define NPARTS 20000
 
 class ParticleSimulation : public BaseViewWindow {
 protected:
 	void _main() {
 		_main_shader = ShaderProgram("../shader/vertex.glsl", "../shader/frag.glsl");
-		ComputeShader gravity_collision = ComputeShader("../shader/systemfirstorder.glsl");
+		ComputeShader gravity_collision = ComputeShader("../shader/systemsecondorder.glsl");
 
 		Particles parts(NPARTS);
 
-		#ifdef BALLS
-		Mesh* balls[NPARTS];
-
-		for (int i = 0; i < NPARTS; i++) {
-			balls[i] = new Mesh(
-				Surface([=](float s, float t){
-					return Sphere(part_size)(s,t);
-				},PI,2*PI),
-				2,
-				40,
-				40);
-			//balls[i]->setType(LINE);
-			balls[i]->initBuffers(GL_STREAM_DRAW);
-			balls[i]->colorCurvature(PI/3*(float)(i+2)/NPARTS);
-		} 
-		#endif
 		
 		//main loop
 		glfwSetTime(0);
@@ -71,24 +40,10 @@ protected:
 			parts.update(gravity_collision,{64,16,1});
 
 			parts.draw(_main_shader);
-			
-			#ifdef BALLS
-			set_ball_positions(balls, &parts);
-			for (int i = 0; i< NPARTS; i++) {
-				balls[i]->draw(_main_shader);
-			}
-			#endif
 
 			glfwSwapBuffers(_window);
 			glfwPollEvents();
 		}
-
-		#ifdef BALLS
-		for (int i = 0; i < NPARTS; i++) {
-			balls[i]->~Mesh();
-		}
-		delete[] balls;
-		#endif
 	}
 
 	
