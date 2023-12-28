@@ -1,5 +1,5 @@
 # particles
-Computes trajectories of dynamical systems in 3D with some visual effects.  Mainly uses Runge-Kutta methods.
+Simulates trajectories of dynamical systems in 3D with some visual effects.  Mainly uses Runge-Kutta methods.
 
 **To compile:** In CMakeLists, make sure to include a path to "lib" folder from [this repository](https://github.com/ebajec/linear-algebra) as an include directory— this uses the matrix class I made there.  Also, make sure that GLEW and GLFW are installed and properly linked in CMakeLists.txt. The headers and some of the binaries are included for portability purposes.
 
