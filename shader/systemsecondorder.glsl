@@ -5,6 +5,7 @@ uniform uint STEPS;
 uniform uint offset;
 uniform float t;
 
+// Big because usually lots of particles
 layout(local_size_x = 256,local_size_y = 1,local_size_z = 1) in;
 
 layout(std430, binding = 0) buffer Positions{
@@ -36,43 +37,48 @@ vec3 lorenz(vec3 pos) {
 }
 
 
-float a = 0.3; //damping term
-float b = 0.2*sin(t);
-float c = 0.2*(cos(t));
+float a = 100; //damping term
+float b = 2;
+float c = 2;
+float d = 4;
 
 //cool looking thing
 vec3 g(vec3 pos) {
     return mat3(
-        -a,          -b*pos.z,     c*pos.y,
-        b*pos.z,     -a, b/4*pos.x,
-       -c*pos.y,     -b/4*pos.x,    -a
+        -a,          b*pos.y,     -c*pos.z,
+        -b*pos.y,     -a ,         d*pos.x,
+       c*pos.z,     -d*pos.x,    -a  
     )*pos;
+}
+
+vec3 system(vec3 pos) {
+    return g(pos);
 }
 
 
 vec3 RK4(vec3 x_0, float dt) {
-    vec3 k_1 = g(x_0);
-    vec3 k_2 = g(x_0 + dt*k_1/2);
-    vec3 k_3 = g(x_0 + dt*k_2/2);
-    vec3 k_4 = g(x_0 + dt*k_3);
+    vec3 k_1 = system(x_0);
+    vec3 k_2 = system(x_0 + dt*k_1/2);
+    vec3 k_3 = system(x_0 + dt*k_2/2);
+    vec3 k_4 = system(x_0 + dt*k_3);
 
     return x_0 + dt*(k_1 + 2*k_2 + 2*k_3 + k_4)/6;
 }
 
-float timestep = 0.01;
+float timestep = 0.004;
 
 
 void update_trail(uint ind, uint cur, uint next, vec3 pos_new) {
     positions[ind + next] = pos_new;
 
-    float c = sigmoid((sqrt(dot(velocities[gl_GlobalInvocationID.x],velocities[gl_GlobalInvocationID.x]))/10-1));
-    colors[ind+cur] = vec4(1-c/4,1-c,c,t);
+    float c = sigmoid((sqrt(dot(velocities[gl_GlobalInvocationID.x],velocities[gl_GlobalInvocationID.x]))/20-2.6));
+    colors[ind+cur] = vec4(1-c/3,1-c/4,c,t);
 
     // Store current position at end of trail buffer if the offset has
     // reset to zero. This allows trails to be drawn continuously.
     if (next == 0) {
         positions[ind + STEPS] = pos_new;
-        colors[ind+ STEPS] = vec4(1-c/4,1-c,c,t);
+        colors[ind+ STEPS] = colors[ind + cur];
     }
 }
 

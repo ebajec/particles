@@ -25,11 +25,11 @@ private:
 
     void _load(float** vbufs,float** sbufs);
 
-    // Current timestep in loop
+    // Current section of particle trail to update
     int offset = 0;
 
     //number of points
-    size_t nparts;
+    size_t _nparts;
     
     //Used when calling glMultiDrawArrays to specify sizes of trails.
     int* _stepcounts;

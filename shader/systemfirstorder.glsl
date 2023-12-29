@@ -5,7 +5,7 @@ uniform uint STEPS;
 uniform uint offset;
 uniform float t;
 
-layout(local_size_x = 256,local_size_y = 1,local_size_z = 1) in;
+layout(local_size_x = 32,local_size_y = 1,local_size_z = 1) in;
 
 layout(std430, binding = 0) buffer Positions{
     vec3 positions[];
@@ -73,13 +73,13 @@ void update_trail(uint ind, uint cur, uint next, vec3 pos_new) {
     positions[ind + next] = pos_new;
 
     float c = sigmoid((sqrt(dot(velocities[gl_GlobalInvocationID.x],velocities[gl_GlobalInvocationID.x]))/10-1));
-    colors[ind+cur] = vec4(1-c/4,1-c,c,t);
+    colors[ind+next] = vec4(1-c/2,1-c/6,c,t);
 
     // Store current position at end of trail buffer if the offset has
     // reset to zero. This allows trails to be drawn continuously.
     if (next == 0) {
         positions[ind + STEPS] = pos_new;
-        colors[ind+ STEPS] = vec4(1-c/4,1-c,c,t);
+        colors[ind+ STEPS] = colors[ind + next];
     }
 }
 
@@ -94,12 +94,11 @@ void main() {
     uint cur = offset%STEPS;
     uint next = (offset+1)%STEPS;
 
-    vec3 vel = lorenz(positions[ind + cur]);
+    vec3 pos_next = RK4(positions[ind+cur],timestep);
 
-    float c = sigmoid((sqrt(dot(vel,vel))/30-3));
-    colors[ind+cur] = vec4(1-c,1-c,1,t);
+    velocities[idx] = (pos_next - positions[ind + cur])/timestep;
 
-    update_trail(ind,cur,next,RK4(positions[ind+cur],timestep));
+    update_trail(ind,cur,next,pos_next);
 
 }
 

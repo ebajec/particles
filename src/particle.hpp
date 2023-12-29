@@ -17,12 +17,12 @@ void Particles::_init() {
 
 Particles::Particles(int count) : GLBufferWrapper<PART_VBOS,PART_SSBOS>(){
 	_init();
-	this->nparts = count;
-	this->_array_size = nparts*NSTEPS;
-	this->_ssbo_sizes[PART_VEL] = nparts;
+	this->_nparts = count;
+	this->_array_size = _nparts*NSTEPS;
+	this->_ssbo_sizes[PART_VEL] = _nparts;
 
-	_stepcounts = new int[2*nparts];
-	_firsts = new int[2*nparts];
+	_stepcounts = new int[2*_nparts];
+	_firsts = new int[2*_nparts];
 
 	this->initBuffers(GL_STREAM_DRAW);
 }
@@ -50,14 +50,14 @@ void Particles::update(ComputeShader shader,matrix<1,3,int> groups)
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER,2,_vbos[PART_COLOR]);
 
 	shader.use();
-	shader.setUniform("NPARTS", (unsigned int)nparts);
+	shader.setUniform("NPARTS", (unsigned int)_nparts);
 	shader.setUniform("STEPS",(unsigned int)(NSTEPS-1));
 	shader.setUniform("offset",(unsigned int)offset);
 	shader.setUniform("t",(float)glfwGetTime());
 
 	glDispatchCompute(
-		(nparts+*groups[0]-1) / (*groups[0]),
-		(nparts+*groups[1]-1) / (*groups[1]), 
+		(_nparts-1) / (*groups[0]) + 1,
+		1,//(nparts+*groups[1]-1) / (*groups[1]), 
 		1//(_count+*groups[2]-1) / (*groups[2])
 	);
 	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
@@ -68,7 +68,7 @@ void Particles::update(ComputeShader shader,matrix<1,3,int> groups)
 	if (this->offset >= NSTEPS-1) 
 		this->offset = 0;
 
-	for (int i = 0; i < nparts; i++) {
+	for (int i = 0; i < _nparts; i++) {
 		_stepcounts[2*i] = offset;
 		_stepcounts[2*i + 1] = NSTEPS - offset - 1;
 		
@@ -90,7 +90,7 @@ void Particles::draw(ShaderProgram shader) {
 	glDepthMask(GL_FALSE);
 
 	glBindVertexArray(_vao);
-	glMultiDrawArrays(GL_LINE_STRIP, _firsts,_stepcounts,2*nparts);
+	glMultiDrawArrays(GL_LINE_STRIP, _firsts,_stepcounts,2*_nparts);
 
 	glDepthMask(GL_TRUE);
 	shader.setUniform("geom_model", mat4::id(), GL_FALSE);
@@ -106,7 +106,7 @@ vec3 random_in_bounds(vec3 bound) {
 
 //these are just random configurations for generating points
 inline vec3 point_ball(float r) {
-	return Sphere(r*gaussian(0.8,0.1))(gaussian(PI/2,PI/5),gaussian(PI,PI));
+	return Sphere(r*gaussian(0.9,0))(gaussian(PI/2,PI/5),gaussian(PI,PI));
 }
 
 inline vec3 i_torus(float rhole,float rtube, int i,int n) {
@@ -124,12 +124,14 @@ inline vec3 path(int i,int n) {
 void Particles::_load(float **vbufs,float **sbufs)
 {	
 
-	//fill buffers with random points
+	//fill buffers with points
 	// array contains nparts*NSTEPS 
-	int M = sqrt(nparts);
-	for (int i = 0; i < this->nparts; i++) {
-		vec4 point = Sphere(5.0f)(2*i*PI/nparts,i*(PI/4));
-		vec4 vel = (1/dot(point,point))*rotatexz<GLfloat>(PI/2)*vec3(point);
+	int M = sqrt(_nparts);
+	for (int i = 0; i < this->_nparts; i++) {
+
+		vec4 point = point_ball(9.0f);//Sphere(5.0f)(2*i*PI/_nparts,i*PI/M);
+
+		vec4 vel = 8*cross(vec3{0,1,0},vec3(point));
 		vec4 color = vec3{1,1,1};
 
 		for (int k = 0; k < 4*NSTEPS; k++) {

@@ -18,26 +18,24 @@ using mat3 = matrix<3, 3, GLfloat>;
 #define WINDOW_HEIGHT 1080	
 #define WINDOW_WIDTH 1920
 
-#define NPARTS 20000
+#define NPARTS 10000
 
 class ParticleSimulation : public BaseViewWindow {
 protected:
 	void _main() {
 		_main_shader = ShaderProgram("../shader/vertex.glsl", "../shader/frag.glsl");
-		ComputeShader gravity_collision = ComputeShader("../shader/systemsecondorder.glsl");
+		ComputeShader system = ComputeShader("../shader/systemsecondorder.glsl");
 
 		Particles parts(NPARTS);
 
-		
 		//main loop
 		glfwSetTime(0);
 		while (!glfwWindowShouldClose(_window)) {
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			_main_shader.use();
 			_cam.connectUniforms(_main_shader);
-			_main_shader.setUniform("nPoints",NPARTS);
 
-			parts.update(gravity_collision,{64,16,1});
+			parts.update(system,{256,1,1});
 
 			parts.draw(_main_shader);
 
