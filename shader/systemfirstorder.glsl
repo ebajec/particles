@@ -69,11 +69,18 @@ vec3 RK4(vec3 x_0, float dt) {
 
 float timestep = 0.007;
 
+vec3 hsvtorgb(vec3 c) {
+    vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+    vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
+
 void update_trail(uint ind, uint cur, uint next, vec3 pos_new) {
     positions[ind + next] = pos_new;
 
-    float c = sigmoid((sqrt(dot(velocities[gl_GlobalInvocationID.x],velocities[gl_GlobalInvocationID.x]))/10-1));
-    colors[ind+next] = vec4(1-c/2,1-c/6,c,t);
+    // Hue is proportional to speed, alpha value is inversely proportional
+    float M = sqrt(dot(velocities[gl_GlobalInvocationID.x],velocities[gl_GlobalInvocationID.x]));
+    colors[ind+cur] = vec4(hsvtorgb(vec3(sigmoid(M/220),1,1)),1/(M+1));
 
     // Store current position at end of trail buffer if the offset has
     // reset to zero. This allows trails to be drawn continuously.

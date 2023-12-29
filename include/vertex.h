@@ -12,15 +12,15 @@
 #include <type_traits>
 
 
-#define VERTEX_ATTRIBUTES 4
+#define VERTEX_ATTRIBUTES 3
 
 using namespace std;
 
 enum VERTEX_ATTRIBUTE {
 	POSITION,
 	NORMAL,
-	COLOR,
-	ADJACENCY
+	COLOR//,
+	//ADJACENCY
 };
 
 //Vertex

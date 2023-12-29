@@ -13,11 +13,12 @@ Camera::Camera(
 	_near_dist(1 / tan(FOV / 2)),
 	_far_dist(far),
 	_pos(pos)
-{
+{	
 	//generate orthonormal, right-handed basis for camera coordinates, with Z
 	//as the normal vector. xyz
-	basis[2] = normalize(normal);
-	basis[0] = cross(basis[2], vec3({ 0,1,0 }));
+	normal = normalize(normal);
+	basis[2] = normal;
+	basis[0] = cross(normal, vec3({ 0,1,0 }));
 	basis[1] = cross(basis[0], basis[2]);
 	basis[0] = normalize(basis[0]);
 	basis[1] = normalize(basis[1]);
@@ -33,6 +34,7 @@ Camera::Camera(
 	};
 
 	_world = mat4(mat3::id() | -1 * (_pos - basis[2] * _near_dist));
+
 	_view = mat4(change_of_basis);
 	_model_yaw = mat4{
 		1,0,0,0,
@@ -58,13 +60,13 @@ void Camera::connectUniforms(const ShaderProgram& shader)
 
 void Camera::rotate(float pitch, float yaw)
 {
-	if (pitch > PI) return;
-	_model_yaw = mat4(rotatexz<GLfloat>(-yaw)) * _model_yaw;
+	if (abs(pitch) > PI) return;
+	_model_yaw = mat4(rotatexz<GLfloat>(yaw)) * _model_yaw;
 	_model_pitch = mat4(rot_axis(basis[0], -pitch)) * _model_pitch;
 }
 
 void Camera::translate(vec3 delta) {
-	_pos = _pos - change_of_basis * mat3(_model_yaw) * delta;
+	_pos = _pos + change_of_basis * mat3(_model_yaw) * delta;
 	_updateViewMat();
 }
 

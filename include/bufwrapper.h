@@ -33,7 +33,7 @@ public:
 	size_t arraySize() { return _array_size; }
 
 	//Size of buffer in number of floating point values. 
-	//@param binding index of vertex buffer object to be sized
+	//@param location index of vertex buffer object to be sized
 	size_t vboBufSize(int location) { return _array_size * _vbo_primitives[location]; }
 	size_t ssboBufSize(int location) { return _ssbo_sizes[location] * _ssbo_primitives[location];}
 

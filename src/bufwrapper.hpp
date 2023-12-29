@@ -9,7 +9,7 @@ void GLBufferWrapper<nVBO,nSSBO>::draw(ShaderProgram shader,int count)
 	glUseProgram(shader.program);
 	shader.setUniform("geom_model", _model, GL_TRUE);
 	glBindVertexArray(_vao);
-	glDrawArrays(_draw_mode, 0, arraySize());
+	glDrawArrays(_draw_mode, 0, vboBufSize(0));
 	shader.setUniform("geom_model", mat4::id(), GL_FALSE);
 }
 
@@ -87,7 +87,7 @@ void GLBufferWrapper<nVBO, nSSBO>::initBuffers(GLenum usage)
 		glEnableVertexAttribArray(i);
 		glBindBuffer(GL_ARRAY_BUFFER, _vbos[i]);
 		glBufferData(GL_ARRAY_BUFFER, vboBufSize(i) * sizeof(float), vbufs[i], usage);
-		glVertexAttribPointer(i, 4, GL_FLOAT, GL_FALSE, 0, NULL);
+		glVertexAttribPointer(_vbo_layout[i], _vbo_primitives[i], GL_FLOAT, GL_FALSE, 0, NULL);
 	}
 
 	for (int i = 0; i < nSSBO; i++) {

@@ -5,8 +5,10 @@ uniform uint STEPS;
 uniform uint offset;
 uniform float t;
 
+float PI = 3.141592654;
+
 // Big because usually lots of particles
-layout(local_size_x = 256,local_size_y = 1,local_size_z = 1) in;
+layout(local_size_x = 128,local_size_y = 1,local_size_z = 1) in;
 
 layout(std430, binding = 0) buffer Positions{
     vec3 positions[];
@@ -24,6 +26,10 @@ float sigmoid(float x ){
     return 1/(1+exp(-x));
 }
 
+vec3 sigmoid3(vec3 x ){
+    return vec3(sigmoid(x.x),sigmoid(x.y),sigmoid(x.z));
+}
+
 // Lorenz attractor
 float sigma = 10;
 float rho = 28;
@@ -37,10 +43,10 @@ vec3 lorenz(vec3 pos) {
 }
 
 
-float a = 100; //damping term
-float b = 2;
-float c = 2;
-float d = 4;
+float a = 50; //damping term
+float b = 3;
+float c = 3;
+float d = 2;
 
 //cool looking thing
 vec3 g(vec3 pos) {
@@ -65,14 +71,21 @@ vec3 RK4(vec3 x_0, float dt) {
     return x_0 + dt*(k_1 + 2*k_2 + 2*k_3 + k_4)/6;
 }
 
-float timestep = 0.004;
+float timestep = 0.01;
 
+
+vec3 hsvtorgb(vec3 c) {
+    vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+    vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
 
 void update_trail(uint ind, uint cur, uint next, vec3 pos_new) {
     positions[ind + next] = pos_new;
 
-    float c = sigmoid((sqrt(dot(velocities[gl_GlobalInvocationID.x],velocities[gl_GlobalInvocationID.x]))/20-2.6));
-    colors[ind+cur] = vec4(1-c/3,1-c/4,c,t);
+    // Hue is proportional to speed, alpha value is inversely proportional
+    float M = sqrt(dot(velocities[gl_GlobalInvocationID.x],velocities[gl_GlobalInvocationID.x]));
+    colors[ind+cur] = vec4(hsvtorgb(vec3(sigmoid(M/220),1,1)),1/(M+1));
 
     // Store current position at end of trail buffer if the offset has
     // reset to zero. This allows trails to be drawn continuously.

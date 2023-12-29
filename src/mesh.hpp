@@ -62,14 +62,14 @@ void Mesh::_init() {
 	_draw_mode = GL_TRIANGLES;
 
 	//define primitive sizes for each vertex buffer and create empty array for each one
-	_vbo_primitives[POSITION] = 3;
-	_vbo_primitives[NORMAL] = 3;
-	_vbo_primitives[COLOR] = 3;
-	_vbo_primitives[ADJACENCY] = 3 * _face_list.size();
+	_vbo_primitives[POSITION] = 4;
+	_vbo_primitives[NORMAL] = 4;
+	_vbo_primitives[COLOR] = 4;
+	//_vbo_primitives[ADJACENCY] = 4 * _face_list.size();
 
-	for (int i = 0; i < VERTEX_ATTRIBUTES; i++) {
-		_vbo_layout[i] = i;
-	}
+	_vbo_layout[POSITION] = 0;
+	_vbo_layout[COLOR] = 1;
+	_vbo_layout[NORMAL] = 2;
 }
 
 Mesh::Mesh() : GLBufferWrapper<VERTEX_ATTRIBUTES,0>() {
@@ -91,6 +91,7 @@ Mesh::Mesh(Vertex* v_start, bool center_vertices) : GLBufferWrapper<VERTEX_ATTRI
 	if (center_vertices) {
 		this->center();
 	}
+	this->setType(TRIANGLE);
 }
 
 
@@ -121,6 +122,7 @@ Mesh::Mesh(matrix<n, n, int> adjacency, initializer_list<vec3> vertices) : GLBuf
 	this->_findEdges();
 	this->_findFacesTriangular();
 	this->computeNormals();
+	this->setType(TRIANGLE);
 }
 
 
@@ -222,7 +224,7 @@ Mesh::Mesh(Surface<paramFunc> S, int genus, int N_s, int N_t) : GLBufferWrapper<
 			float t = current_index.second * dt;
 
 			current->position = S.eval(s, t);
-			current->color = vec3(1);//hue(s, t * 2 * PI / t_max);
+			current->color = hue(s, t * 2 * PI / t_max);
 
 			current->connect(next_s);
 			current->connect(next_t);
@@ -242,6 +244,7 @@ Mesh::Mesh(Surface<paramFunc> S, int genus, int N_s, int N_t) : GLBufferWrapper<
 	this->_findEdges();
 	this->_findFacesTriangular();
 	this->computeNormals();
+	this->setType(TRIANGLE);
 }
 
 Mesh::~Mesh() {
@@ -258,18 +261,6 @@ void Mesh::center() {
 	for (Vertex* v : _vertex_list) {
 		v->position = v->position - c;
 	}
-}
-
-unsigned long Mesh::arraySize() {
-	switch (_type) {
-	case LINE:
-		return 2 * _edge_list.size();
-		break;
-	case TRIANGLE:
-		return 3 * _face_list.size();
-		break;
-	}
-	return 0;
 }
 
 template<typename func>
@@ -329,10 +320,8 @@ void Mesh::transformVertices(func F) {
 	}
 }
 
-const int vert_attributes = 3;
 void Mesh::_load(float** vbufs,float** sbufs)
-{
-
+{	
 	int counter = 0;
 
 	//copy vertex data to respective memory block before copying to buffer
@@ -342,7 +331,7 @@ void Mesh::_load(float** vbufs,float** sbufs)
 		for (Vertex* v : vertices) {
 			vec4 pos = v->position;
 			vec4 normal = v->normal;
-			vec4 color = v->color;
+			vec4 color = v->color; *color[3] = 1;
 
 			copy(pos.data(), pos.data() + 4, vbufs[POSITION] + 4 * counter);
 			copy(normal.data(), normal.data() + 4, vbufs[NORMAL] + 4 * counter);
@@ -577,8 +566,10 @@ void Mesh::setType(ShapeType type)
 	switch (type) {
 	case TRIANGLE:
 		_draw_mode = GL_TRIANGLES;
+		_array_size = 3*_face_list.size();
 		break;
 	case LINE:
+		_array_size = 2*_edge_list.size();
 		_draw_mode = GL_LINES;
 		break;
 	}

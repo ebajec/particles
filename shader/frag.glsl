@@ -11,6 +11,6 @@ float PI = 3.141592654;
 
 void main()
 {   
-    float fade = exp(7*(frag_color.w - t));
+    float fade = frag_color.w;//exp(10*(frag_color.w - t));
     FragColor = vec4(frag_color.xyz,fade);
 } 

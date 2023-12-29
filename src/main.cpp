@@ -18,15 +18,22 @@ using mat3 = matrix<3, 3, GLfloat>;
 #define WINDOW_HEIGHT 1080	
 #define WINDOW_WIDTH 1920
 
-#define NPARTS 10000
+#define NPARTS 4000
 
 class ParticleSimulation : public BaseViewWindow {
 protected:
 	void _main() {
 		_main_shader = ShaderProgram("../shader/vertex.glsl", "../shader/frag.glsl");
-		ComputeShader system = ComputeShader("../shader/systemsecondorder.glsl");
+		ComputeShader system = ComputeShader("../shader/systemfirstorder.glsl");
 
 		Particles parts(NPARTS);
+
+		Mesh donut(Surface([=](float s, float t){
+			return Torus(3.0f,1.0f)(s,t);
+		},2*PI,2*PI),0,50,50);
+		donut.checkChar();
+		donut.initBuffers(GL_STREAM_DRAW);
+		
 
 		//main loop
 		glfwSetTime(0);
@@ -35,9 +42,16 @@ protected:
 			_main_shader.use();
 			_cam.connectUniforms(_main_shader);
 
-			parts.update(system,{256,1,1});
+			parts.update(system,{128,1,1});
 
 			parts.draw(_main_shader);
+			donut.draw(_main_shader);
+			donut.transformAffine(mat4{
+				1,0,0,0,
+				0,1,0,0,
+				0,0,1,0.1,
+				0,0,0,1
+				});
 
 			glfwSwapBuffers(_window);
 			glfwPollEvents();

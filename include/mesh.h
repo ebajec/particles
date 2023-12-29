@@ -46,8 +46,6 @@ public:
 	//taking a Vertex pointer.
 	template<typename func> void transformVertices(func F);
 
-	unsigned long arraySize();
-
 	const list<Face*> faces() {return _face_list;}
 	const list<Edge*> edges() {return _edge_list;}
 

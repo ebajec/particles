@@ -50,8 +50,9 @@ void BaseViewWindow::_windowProgram(const char* title, GLFWmonitor* monitor, GLF
 	glfwSetWindowUserPointer(_window, this);
 	glfwSetKeyCallback(_window, _keyCallback);
 
-	glfwSetCursorPosCallback(_window, _cursorPosCallback);
 	_enableMouseControls();
+	glfwSetCursorPos(_window,0,0);
+	glfwSetCursorPosCallback(_window, _cursorPosCallback);
 	_cam_manager.start();
 
 	const GLubyte* _renderer = glGetString(GL_RENDERER);
@@ -108,12 +109,12 @@ void BaseViewWindow::_mapMovementKeys()  {
 		//mval determines whether motion in a direction should start or stop
 		int mval = (action == GLFW_PRESS) - (action == GLFW_RELEASE);
 		vec3& dir = this->_cam_manager.motion_dir;
-		this->_key_manager.mapKey(GLFW_KEY_W, action, [&dir, mval]() {dir[0][2] += mval; });
-		this->_key_manager.mapKey(GLFW_KEY_A, action, [&dir, mval]() {dir[0][0] += mval; });
-		this->_key_manager.mapKey(GLFW_KEY_S, action, [&dir, mval]() {dir[0][2] += -mval; });
-		this->_key_manager.mapKey(GLFW_KEY_D, action, [&dir, mval]() {dir[0][0] += -mval; });
-		this->_key_manager.mapKey(GLFW_KEY_LEFT_SHIFT, action, [&dir, mval]() {dir[0][1] += -mval; });
-		this->_key_manager.mapKey(GLFW_KEY_SPACE, action, [&dir, mval]() {dir[0][1] += mval; });
+		this->_key_manager.mapKey(GLFW_KEY_W, action, [&dir, mval]() {*dir[2] += +mval; });
+		this->_key_manager.mapKey(GLFW_KEY_A, action, [&dir, mval]() {*dir[0] += -mval; });
+		this->_key_manager.mapKey(GLFW_KEY_S, action, [&dir, mval]() {*dir[2] += -mval; });
+		this->_key_manager.mapKey(GLFW_KEY_D, action, [&dir, mval]() {*dir[0] += +mval; });
+		this->_key_manager.mapKey(GLFW_KEY_LEFT_SHIFT, action, [&dir, mval]() {*dir[1] += -mval; });
+		this->_key_manager.mapKey(GLFW_KEY_SPACE, action, [&dir, mval]() {*dir[1] += mval; });
 	};
 	map_keys(GLFW_PRESS);
 	map_keys(GLFW_RELEASE);

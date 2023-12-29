@@ -16,6 +16,8 @@ out vec3 frag_pos;
 void main() {
 	
 	vec4 v_pos_new = geom_model*vec4(v_pos,1);
+	//Make it so z is up
+	v_pos_new = v_pos_new.xzyw;
 	//vec4 normal_new = geom_model*vec4(normal,1);
 	
 	//lighting is based on geometry transformations
