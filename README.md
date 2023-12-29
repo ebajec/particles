@@ -9,4 +9,4 @@ Simulates trajectories of dynamical systems in 3D with some visual effects.
 *close:* closes the scene being rendered. Editing the shaders and entering "launch" again, you can play around with it.
 
 *exit:* exits the program.
-"# particles" 
+
