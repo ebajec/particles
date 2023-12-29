@@ -51,6 +51,7 @@ void BaseViewWindow::_windowProgram(const char* title, GLFWmonitor* monitor, GLF
 	glfwSetKeyCallback(_window, _keyCallback);
 
 	_enableMouseControls();
+	//Center cursor so camera does not jerk on startup
 	glfwSetCursorPos(_window,0,0);
 	glfwSetCursorPosCallback(_window, _cursorPosCallback);
 	_cam_manager.start();
@@ -63,8 +64,6 @@ void BaseViewWindow::_windowProgram(const char* title, GLFWmonitor* monitor, GLF
 	// tell GL to only draw onto a pixel if the shape is closer to the viewer
 	glEnable(GL_DEPTH_TEST); // enable depth-testing
 	glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
-
-	
 
 	_main();
 
@@ -99,7 +98,6 @@ void BaseViewWindow::_enableMouseControls()
 		glfwSetInputMode(_window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 	}
 	else return;
-
 
 }
 
