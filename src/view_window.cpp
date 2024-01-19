@@ -10,7 +10,7 @@ BaseViewWindow::BaseViewWindow(
 	
 	_cam = Camera(
 		vec3({ -1,0,0 }),
-		vec3({ 10,0,0 }),
+		vec3({ 250,0,0 }),
 		_width,
 		_height,
 		PI / 3);
