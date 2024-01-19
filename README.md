@@ -6,6 +6,7 @@ Simulates trajectories of dynamical systems in 3D with some visual effects.
 **How to use:** Once the program has opened, type "launch" in the console window to launch the scene.  To control the camera, use WASD and the mouse.
 
 **Other commands**
+
 *close:* closes the scene being rendered. Editing the shaders and entering "launch" again, you can play around with it.
 
 *exit:* exits the program.
