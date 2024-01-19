@@ -18,7 +18,7 @@ using mat3 = matrix<3, 3, GLfloat>;
 #define WINDOW_HEIGHT 1080	
 #define WINDOW_WIDTH 1920
 
-#define NPARTS 9000
+#define NPARTS 1500000
 
 class ParticleSimulation : public BaseViewWindow {
 protected:
