@@ -30,30 +30,18 @@ vec3 sigmoid3(vec3 x ){
     return vec3(sigmoid(x.x),sigmoid(x.y),sigmoid(x.z));
 }
 
-// Lorenz attractor
-float sigma = 10;
-float rho = 28;
-float beta = 2;
-vec3 lorenz(vec3 pos) {
-    return vec3(
-        sigma*(pos.y-pos.x),
-        pos.x*(rho - pos.z) - pos.y,
-        pos.x*pos.y - beta*pos.z
-    );
-}
 
-
-float a = 50; //damping term
-float b = 3;
-float c = 3;
-float d = 2;
+float a = 40; //damping term
+float b = 0.1;
+float c = 0.4;
+float d = 0.7;
 
 //cool looking thing
 vec3 g(vec3 pos) {
     return mat3(
         -a,          b*pos.y,     -c*pos.z,
         -b*pos.y,     -a ,         d*pos.x,
-       c*pos.z,     -d*pos.x,    -a  
+       c*pos.z,     -d/3*pos.x,    -a  
     )*pos;
 }
 
@@ -85,7 +73,7 @@ void update_trail(uint ind, uint cur, uint next, vec3 pos_new) {
 
     // Hue is proportional to speed, alpha value is inversely proportional
     float M = sqrt(dot(velocities[gl_GlobalInvocationID.x],velocities[gl_GlobalInvocationID.x]));
-    colors[ind+cur] = vec4(hsvtorgb(vec3(sigmoid(M/220),1,1)),1/(M+1));
+    colors[ind+cur] = vec4(hsvtorgb(vec3(sigmoid(M/300),1,1)),1/(M+1));
 
     // Store current position at end of trail buffer if the offset has
     // reset to zero. This allows trails to be drawn continuously.
