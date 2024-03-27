@@ -7,15 +7,12 @@ set(CMAKE_CXX_STANDARD 20)
 # Find source files
 file(GLOB SOURCES "src/*.cpp")
 
-#if you built glfw from source files, add the path to the root directory
-#for glfw here
-set(GLFW_ROOT_DIR ../../../glfw )
-set(GLEW_ROOT_DIR ../../../glew )
-set(NUKLEAR_ROOT_DIR ../../../nuklear )
+set(GLEW_ROOT_DIR ../../src/glew)
+set(NUKLEAR_ROOT_DIR ../../src/Nuklear )
 
-include_directories(${GLFW_ROOT_DIR}/include)
 include_directories(${GLEW_ROOT_DIR}/include)
-include_directories(${NUKLEAR_ROOT_DIR}/include)
+include_directories(${NUKLEAR_ROOT_DIR})
+
 #if https://github.com/ebajec/linear-algebra is cloned to the same location as
 #this project, this should work fine.  If not, make sure to add in here the path 
 #to wherever it was cloned. 
@@ -34,9 +31,6 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set(GLEW_LIB GLEW)
 else ()
 endif ()
-
-add_subdirectory(${GLFW_ROOT_DIR} build)
-
 
 find_package(OpenGL REQUIRED)
 
