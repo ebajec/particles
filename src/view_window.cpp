@@ -1,16 +1,36 @@
 #include "view_window.h"
 
-
-
 BaseViewWindow::BaseViewWindow(
 	int width,
 	int height
 ) : _width(width), _height(height) {
-	_mapMovementKeys();
-	
+
+	/************** SET UP KEYBINDS **************/
+
+	//map_keys is to condense things
+	auto map_movement = [this](int action) {
+		//mval determines whether motion in a direction should start or stop
+		int mval = (action == GLFW_PRESS) - (action == GLFW_RELEASE);
+		vec3& dir = this->_cam_manager.motion_dir;
+		this->_key_manager.mapKey(GLFW_KEY_W, action, [&dir, mval]() {*dir[2] += +mval; });
+		this->_key_manager.mapKey(GLFW_KEY_A, action, [&dir, mval]() {*dir[0] += -mval; });
+		this->_key_manager.mapKey(GLFW_KEY_S, action, [&dir, mval]() {*dir[2] += -mval; });
+		this->_key_manager.mapKey(GLFW_KEY_D, action, [&dir, mval]() {*dir[0] += +mval; });
+		this->_key_manager.mapKey(GLFW_KEY_LEFT_SHIFT, action, [&dir, mval]() {*dir[1] += -mval; });
+		this->_key_manager.mapKey(GLFW_KEY_SPACE, action, [&dir, mval]() {*dir[1] += mval; });};
+	map_movement(GLFW_PRESS);
+	map_movement(GLFW_RELEASE);
+
+	// Press ESC to enable or disable camera controls
+	this->_key_manager.mapKey(GLFW_KEY_ESCAPE, GLFW_PRESS, [this]()
+	{ 
+		if (this->_mouse_enabled) _disableMouseControls(); else _enableMouseControls(); 
+	});
+
+	/************** SET UP CAMERA **************/
 	_cam = Camera(
 		vec3({ -1,0,0 }),
-		vec3({ 250,0,0 }),
+		vec3({ 10,0,0 }),
 		_width,
 		_height,
 		PI / 3);
@@ -50,10 +70,8 @@ void BaseViewWindow::_windowProgram(const char* title, GLFWmonitor* monitor, GLF
 	glfwSetWindowUserPointer(_window, this);
 	glfwSetKeyCallback(_window, _keyCallback);
 
-	_enableMouseControls();
-	//Center cursor so camera does not jerk on startup
-	glfwSetCursorPos(_window,0,0);
 	glfwSetCursorPosCallback(_window, _cursorPosCallback);
+	_enableMouseControls();
 	_cam_manager.start();
 
 	const GLubyte* _renderer = glGetString(GL_RENDERER);
@@ -72,8 +90,6 @@ void BaseViewWindow::_windowProgram(const char* title, GLFWmonitor* monitor, GLF
 	_is_running = false;
 	glfwDestroyWindow(_window);
 	glfwTerminate();
-
-	
 	return;
 }
 
@@ -86,36 +102,35 @@ void BaseViewWindow::_keyCallback(GLFWwindow* window, int key, int scancode, int
 
 void BaseViewWindow::_cursorPosCallback(GLFWwindow* window, double xpos, double ypos)
 {
+	
 	auto win = static_cast<BaseViewWindow*>(glfwGetWindowUserPointer(window));
-	win->_cam_manager.rotate(xpos, ypos);
+	if (win->_mouse_enabled) {
+		win->_cam_manager.rotate(xpos - win->_width/2, ypos - win->_height/2);
+	}
 }
 
 void BaseViewWindow::_enableMouseControls()
 {
+	//Center cursor so camera does not jerk
+	
 	glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	if (glfwRawMouseMotionSupported()) {
 		glfwSetInputMode(_window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 	}
-	else return;
-
+	glfwSetCursorPos(_window,_width/2,_height/2);
+	_mouse_enabled = true;
+	return;
 }
 
-void BaseViewWindow::_mapMovementKeys()  {
-	//map_keys is to condense things
-	auto map_keys = [this](int action) {
-		//mval determines whether motion in a direction should start or stop
-		int mval = (action == GLFW_PRESS) - (action == GLFW_RELEASE);
-		vec3& dir = this->_cam_manager.motion_dir;
-		this->_key_manager.mapKey(GLFW_KEY_W, action, [&dir, mval]() {*dir[2] += +mval; });
-		this->_key_manager.mapKey(GLFW_KEY_A, action, [&dir, mval]() {*dir[0] += -mval; });
-		this->_key_manager.mapKey(GLFW_KEY_S, action, [&dir, mval]() {*dir[2] += -mval; });
-		this->_key_manager.mapKey(GLFW_KEY_D, action, [&dir, mval]() {*dir[0] += +mval; });
-		this->_key_manager.mapKey(GLFW_KEY_LEFT_SHIFT, action, [&dir, mval]() {*dir[1] += -mval; });
-		this->_key_manager.mapKey(GLFW_KEY_SPACE, action, [&dir, mval]() {*dir[1] += mval; });
-	};
-	map_keys(GLFW_PRESS);
-	map_keys(GLFW_RELEASE);
+void BaseViewWindow::_disableMouseControls()
+{
+	_mouse_enabled = false;
+	glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	if (glfwRawMouseMotionSupported()) {
+		glfwSetInputMode(_window, GLFW_RAW_MOUSE_MOTION, GLFW_FALSE);
+	}
+	glfwSetCursorPos(_window,_width/2,_height/2);
 	return;
 }
 

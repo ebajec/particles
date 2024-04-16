@@ -1,7 +1,9 @@
 #ifndef BUFWRAPPER_HPP
 #define BUFWRAPPER_HPP
 
+#ifndef BUFWRAPPER_H
 #include "bufwrapper.h"
+#endif
 
 template<int nVBO, int nSSBO>
 void GLBufferWrapper<nVBO,nSSBO>::draw(ShaderProgram shader,int count)

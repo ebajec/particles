@@ -1,6 +1,6 @@
 #version 430 core
 
-uniform float t;
+uniform float value;
 
 in vec4 frag_color;
 in vec3 frag_pos;
@@ -11,7 +11,5 @@ float PI = 3.141592654;
 
 void main()
 {   
-    float fade = exp(10*(frag_color.w - t));
-    //float fade = frag_color.w;
-    FragColor = vec4(frag_color.xyz,fade);
+    FragColor = vec4(frag_color.xy,value,1);
 } 

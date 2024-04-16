@@ -129,9 +129,9 @@ void Particles::_load(float **vbufs,float **sbufs)
 	int M = sqrt(_nparts);
 	for (int i = 0; i < this->_nparts; i++) {
 
-		vec4 point = point_ball(50.0f) +  vec3{30,0,0};//(2*i*PI/_nparts,PI/2) - vec3{10,0,0};
+		vec4 point = point_ball(5.0f);//(2*i*PI/_nparts,PI/2) - vec3{10,0,0};
 
-		vec4 vel = cross(vec3{-3,1,-2},vec3(point-vec3{30,0,0}));
+		vec4 vel = cross(vec3{-3,1,-2},vec3(point));
 		vec4 color = vec3{1,1,1};
 
 		for (int k = 0; k < 4*NSTEPS; k++) {

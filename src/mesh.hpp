@@ -224,7 +224,7 @@ Mesh::Mesh(Surface<paramFunc> S, int genus, int N_s, int N_t) : GLBufferWrapper<
 			float t = current_index.second * dt;
 
 			current->position = S.eval(s, t);
-			current->color = hue(s, t * 2 * PI / t_max);
+			current->color = current->position;
 
 			current->connect(next_s);
 			current->connect(next_t);

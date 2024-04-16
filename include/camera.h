@@ -29,21 +29,22 @@ public:
 
 	void connectUniforms(const ShaderProgram& shader);
 	void rotate(float pitch, float yaw);
+	// Adjusts projection matrix to account for screen ratio
+	void setScreenRatio(int w, int h);
 	/*Moves camera in direction delta. 
 	*/
 	void translate(vec3 delta);
 	void reset();
 	vec3 pos() {return  (_pos - basis[2]*_near_dist);}
 	vec3 coord(int i){return mat3(_model_pitch * _model_yaw)* basis[i];}
-	int _h_screen;
-	int _w_screen;
 
 	GLfloat _near_dist;
 	GLfloat _far_dist;
 
 	vec3 _pos;
 	vec3 basis[3];
-	mat3 change_of_basis;
+	// converts std R^3 basis to camera coordinates
+	mat3 coord_trans;
 	mat4 _world;
 	//vertical rotations
 	mat4 _model_pitch;
@@ -53,7 +54,7 @@ public:
 	mat4 _proj;
 
 	void _updateViewMat() {
-		_view = mat4(change_of_basis);
+		_view = mat4(coord_trans);
 		_world = mat4(mat3::id() | -1 * (_pos - basis[2] * _near_dist));
 	}
 };

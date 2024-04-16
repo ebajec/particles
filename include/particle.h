@@ -10,7 +10,7 @@ enum PART_SSBO_ATTR {PART_VEL};
 
 #define PART_VBOS 2
 #define PART_SSBOS 1
-#define NSTEPS 10
+#define NSTEPS 101
 
 class Particles : public GLBufferWrapper<PART_VBOS,PART_SSBOS> {
 public:

@@ -5,6 +5,12 @@ uniform uint STEPS;
 uniform uint offset;
 uniform float t;
 
+//SYSTEM PARAMETERS
+uniform float damp;
+uniform float a;
+uniform float b;
+uniform float c;
+
 float PI = 3.141592654;
 
 // Big because usually lots of particles
@@ -30,25 +36,18 @@ vec3 sigmoid3(vec3 x ){
     return vec3(sigmoid(x.x),sigmoid(x.y),sigmoid(x.z));
 }
 
-
-float a = 40; //damping term
-float b = 0.1;
-float c = 0.4;
-float d = 0.7;
-
 //cool looking thing
 vec3 g(vec3 pos) {
     return mat3(
-        -a,          b*pos.y,     -c*pos.z,
-        -b*pos.y,     -a ,         d*pos.x,
-       c*pos.z,     -d/3*pos.x,    -a  
+        -damp,          a*pos.y,     -b*pos.z,
+        -a*pos.y,     -damp,         c*pos.x,
+        b*pos.z,     -c*pos.x,    -damp
     )*pos;
 }
 
 vec3 system(vec3 pos) {
     return g(pos);
 }
-
 
 vec3 RK4(vec3 x_0, float dt) {
     vec3 k_1 = system(x_0);
@@ -61,7 +60,6 @@ vec3 RK4(vec3 x_0, float dt) {
 
 float timestep = 0.01;
 
-
 vec3 hsvtorgb(vec3 c) {
     vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
     vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
@@ -73,7 +71,7 @@ void update_trail(uint ind, uint cur, uint next, vec3 pos_new) {
 
     // Hue is proportional to speed, alpha value is inversely proportional
     float M = sqrt(dot(velocities[gl_GlobalInvocationID.x],velocities[gl_GlobalInvocationID.x]));
-    colors[ind+cur] = vec4(hsvtorgb(vec3(sigmoid(M/300),1,1)),1/(M+1));
+    colors[ind+cur] = vec4(hsvtorgb(vec3(sigmoid(M/100),1,1)),t);
 
     // Store current position at end of trail buffer if the offset has
     // reset to zero. This allows trails to be drawn continuously.

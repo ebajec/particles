@@ -73,8 +73,6 @@ protected:
 
 };
 
-
-
 #include "bufwrapper.hpp"
 
 #endif

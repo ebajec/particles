@@ -3,7 +3,7 @@
 #ifndef VIEW_WINDOW_H
 #define VIEW_WINDOW_H
 #include <GL/glew.h> 
-#include <GLFW/glfw3.h> 
+#include <GLFW/glfw3.h>
 #include <thread>
 #include <functional>
 #include "camera.h"
@@ -48,7 +48,7 @@ public:
 	/*Camera will move in this direction each camera update. Camera::translate()
 	* is called with motion_dir as the argument.*/
 	vec3 motion_dir = { 0,0,0 };
-	double movespeed = 0.00001;
+	double movespeed = 0.000001;
 	double camspeed = 0.004;
 
 	CameraManager() {}
@@ -81,6 +81,7 @@ protected:
 	int _height;
 	int _width;
 	bool _is_running = false;
+	bool _mouse_enabled = false;
 
 	Camera _cam;
 	ShaderProgram _main_shader;
@@ -104,7 +105,7 @@ protected:
 	//callback for cursor position update event
 	static void _cursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 	void _enableMouseControls();
-	void _mapMovementKeys();
+	void _disableMouseControls();
 
 public:
 	BaseViewWindow(
