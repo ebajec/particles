@@ -85,6 +85,7 @@ void BaseViewWindow::_windowProgram(const char* title, GLFWmonitor* monitor, GLF
 
 	_main();
 
+	_disableMouseControls();
 	_main_thread.detach();
 	_cam_manager.stop();
 	_is_running = false;
@@ -159,7 +160,6 @@ void CameraManager::_update_loop()
 CameraManager::~CameraManager()
 {
 	_should_close = true;
-	_updater_thread.detach();
 }
 
 void CameraManager::start()
