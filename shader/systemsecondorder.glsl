@@ -10,6 +10,7 @@ uniform float damp;
 uniform float a;
 uniform float b;
 uniform float c;
+uniform float f;
 
 float PI = 3.141592654;
 
@@ -37,28 +38,18 @@ vec3 sigmoid3(vec3 x ){
 }
 
 //cool looking thing
-vec3 g(vec3 pos) {
+vec3 g(vec3 pos,vec3 vel) {
+    float r = sqrt(pos.x*pos.x + pos.y*pos.y + pos.z*pos.z);
     return mat3(
-        -damp,          a*pos.y,     -b*pos.z,
-        -a*pos.y,     -damp,         c*pos.x,
-        b*pos.z,     -c*pos.x,    -damp
+        -f,          a*pos.y,     -b*pos.z,
+        -a*pos.y,     -f,         c*pos.x,
+        b*pos.z,     -c*pos.x,    -f
     )*pos;
 }
 
-vec3 system(vec3 pos) {
-    return g(pos);
+vec3 system(vec3 pos, vec3 vel) {
+    return g(pos, vel);
 }
-
-vec3 RK4(vec3 x_0, float dt) {
-    vec3 k_1 = system(x_0);
-    vec3 k_2 = system(x_0 + dt*k_1/2);
-    vec3 k_3 = system(x_0 + dt*k_2/2);
-    vec3 k_4 = system(x_0 + dt*k_3);
-
-    return x_0 + dt*(k_1 + 2*k_2 + 2*k_3 + k_4)/6;
-}
-
-float timestep = 0.01;
 
 vec3 hsvtorgb(vec3 c) {
     vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
@@ -81,6 +72,17 @@ void update_trail(uint ind, uint cur, uint next, vec3 pos_new) {
     }
 }
 
+float dt = 0.01;
+
+// Taylor approximations
+vec3 T2(vec3 x, vec3 x_dot, vec3 x_ddot, float h) {
+    return x + x_dot*h + x_ddot*pow(h,2)/2;
+} 
+
+vec3 T1(vec3 x, vec3 x_dot, float h) {
+    return x + x_dot*h;
+} 
+
 void main() {
     uint idx = gl_GlobalInvocationID.x;
 
@@ -92,10 +94,26 @@ void main() {
     uint cur = offset%STEPS;
     uint next = (offset+1)%STEPS;
 
-    velocities[idx] += RK4(positions[ind + cur],timestep) - positions[ind+ cur];
+    // Fourth-order Runge-Kutta approximation 
+    vec3 x_0 = positions[ind + cur];
+    vec3 v_0 = velocities[idx];
 
-    update_trail(ind,cur,next,positions[ind + cur] + timestep*velocities[idx]);
+    vec3 k_1 = system(x_0, v_0);
+    vec3 v_1 = T1(v_0,k_1,dt/2);
 
+    vec3 k_2 = system(T2(x_0,v_1,k_1,dt/2), v_1);
+    vec3 v_2 = T1(v_1,k_2,dt/2);
+
+    vec3 k_3 = system(T2(x_0,v_2,k_2,dt/2), v_2);
+    vec3 v_3 = T1(v_1,k_3,dt);
+
+    vec3 k_4 = system(T2(x_0,v_3,k_3,dt), v_3);
+
+    vec3 v_final = v_0 + dt*(k_1 + 2*k_2 + 2*k_3 + k_4)/6;
+    vec3 x_final = T2(x_0,dt*(v_1 + 2*v_2 + 2*v_3 + v_final)/6, v_1 - v_final, dt);
+
+    velocities[idx] = v_final;
+    update_trail(ind,cur,next,x_final);
 }
 
 
