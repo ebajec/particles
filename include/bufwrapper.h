@@ -12,7 +12,7 @@ template<int nVBO, int nSSBO = 0>
 class GLBufferWrapper {
 public:
 	GLBufferWrapper();
-  
+	~GLBufferWrapper();
 	/*Copies data for each vertex binding into GPU buffers.*/
 	void initBuffers(GLenum usage);
 
@@ -61,8 +61,6 @@ protected:
 	GLuint _vao;
 	GLuint _vbos[nVBO];
 	GLuint _ssbo[nSSBO];
-
-	
 
 	//define layout map and primitive sizes here
 	virtual void _init() = 0;

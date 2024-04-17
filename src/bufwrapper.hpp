@@ -68,6 +68,20 @@ GLBufferWrapper<nVBO, nSSBO>::GLBufferWrapper()
 	};
 }
 
+template <int nVBO, int nSSBO>
+inline GLBufferWrapper<nVBO, nSSBO>::~GLBufferWrapper()
+{
+	for (int i = 0; i < nVBO; i++) {
+		glDeleteBuffers(1, _vbos + i);
+	}
+
+	for (int i = 0; i < nSSBO; i++) {
+		glDeleteBuffers(1,_ssbo + i);
+	}
+
+	glDeleteVertexArrays(1,&_vao);
+}
+
 template<int nVBO, int nSSBO>
 void GLBufferWrapper<nVBO, nSSBO>::initBuffers(GLenum usage)
 {
