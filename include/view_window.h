@@ -11,6 +11,13 @@
 #include "bufwrapper.h"
 #include <map>
 
+class WinState{
+public:
+	bool _is_running = false;
+	bool _mouse_enabled = false;
+	bool _move_enabled = false;
+};
+
 /*Maps or unmaps keys + actions to functions, and holds information regarding the 
 * respective function for a key and action pair. 
 * 
@@ -39,25 +46,23 @@ class CameraManager {
 private:
 	thread _updater_thread;
 	Camera* _cam = nullptr;
-	bool _should_close = false;
 	vec2 _cursor_pos = { 0,0 };
 
-	void _update_loop();
+	void _update_loop(WinState* state);
 public:
 
 	/*Camera will move in this direction each camera update. Camera::translate()
 	* is called with motion_dir as the argument.*/
 	vec3 motion_dir = { 0,0,0 };
-	float movespeed = 1;
-	float camspeed = 0.004;
+	float movespeed = 0.2;
+	float sensitivity = 0.004;
 
 	CameraManager() {}
-	~CameraManager();
 
 	//sets Camera object to be controlled
 	void attach(Camera* cam) { _cam = cam; }
 	//launches thread which contiuously updates camera
-	void start();
+	void start(WinState* state);
 	//terminates updater thread
 	void stop();
 	//rotates camera based of difference between old and new cursor pos
@@ -80,8 +85,7 @@ protected:
 
 	int _height;
 	int _width;
-	bool _is_running = false;
-	bool _mouse_enabled = false;
+	WinState state;
 
 	Camera _cam;
 	ShaderProgram _main_shader;
@@ -113,7 +117,7 @@ public:
 		int height
 	);
 
-	bool isRunning() { return _is_running; }
+	bool isRunning() { return this->state._is_running;}
 
 	void launch(
 		const char* title,

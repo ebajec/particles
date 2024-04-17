@@ -24,7 +24,8 @@ BaseViewWindow::BaseViewWindow(
 	// Press ESC to enable or disable camera controls
 	this->_key_manager.mapKey(GLFW_KEY_ESCAPE, GLFW_PRESS, [this]()
 	{ 
-		if (this->_mouse_enabled) _disableMouseControls(); else _enableMouseControls(); 
+		state._move_enabled = !state._move_enabled;
+		if (this->state._mouse_enabled) _disableMouseControls(); else _enableMouseControls(); 
 	});
 
 	/************** SET UP CAMERA **************/
@@ -39,7 +40,7 @@ BaseViewWindow::BaseViewWindow(
 
 void BaseViewWindow::launch(const char* title, GLFWmonitor* monitor, GLFWwindow* share)
 {
-	_is_running = true;
+	state._is_running = true;
 	_main_thread = std::thread(&BaseViewWindow::_windowProgram, this, title, monitor, share);
 }
 
@@ -71,16 +72,12 @@ void BaseViewWindow::_windowProgram(const char* title, GLFWmonitor* monitor, GLF
 	glfwSetKeyCallback(_window, _keyCallback);
 
 	glfwSetCursorPosCallback(_window, _cursorPosCallback);
-	_enableMouseControls();
-	_cam_manager.start();
+	_cam_manager.start(&this->state);
 
 	const GLubyte* _renderer = glGetString(GL_RENDERER);
 	const GLubyte* _version = glGetString(GL_VERSION);
 	printf("Renderer: %s\n", _renderer);
 	printf("OpenGL version supported %s\n", _version);
-
-	// tell GL to only draw onto a pixel if the shape is closer to the viewer
-	glEnable(GL_DEPTH_TEST); // enable depth-testing
 	glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
 
 	_main();
@@ -88,7 +85,7 @@ void BaseViewWindow::_windowProgram(const char* title, GLFWmonitor* monitor, GLF
 	_disableMouseControls();
 	_main_thread.detach();
 	_cam_manager.stop();
-	_is_running = false;
+	state._is_running = false;
 	glfwDestroyWindow(_window);
 	glfwTerminate();
 	return;
@@ -110,7 +107,7 @@ void BaseViewWindow::_cursorPosCallback(GLFWwindow* window, double xpos, double 
 	auto dx = xpos - width/2;
 	auto dy = ypos - height/2;
 
-	if (win->_mouse_enabled) {
+	if (win->state._mouse_enabled) {
 		win->_cam_manager.rotate(dx,dy);
 		glfwSetCursorPos(window,width/2,height/2);
 	}	
@@ -125,13 +122,13 @@ void BaseViewWindow::_enableMouseControls()
 		glfwSetInputMode(_window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 	}
 	glfwSetCursorPos(_window,_width/2,_height/2);
-	_mouse_enabled = true;
+	state._mouse_enabled = true;
 	return;
 }
 
 void BaseViewWindow::_disableMouseControls()
 {
-	_mouse_enabled = false;
+	state._mouse_enabled = false;
 	glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	if (glfwRawMouseMotionSupported()) {
 		glfwSetInputMode(_window, GLFW_RAW_MOUSE_MOTION, GLFW_FALSE);
@@ -148,32 +145,26 @@ void KeyManager::callKeyFunc(int key, int action)
 	return;
 }
 
-void CameraManager::_update_loop()
+void CameraManager::_update_loop(WinState* state)
 {
 	while (true) {
-		if (_should_close) return;
-		_cam->translate(motion_dir * pow(movespeed,2)*1e-4f);
+		if (!state->_is_running) return;
+		if (state->_move_enabled)
+			_cam->translate(motion_dir * pow(movespeed,2)*1e-4f);
 	}
 	return;
 }
 
-CameraManager::~CameraManager()
+void CameraManager::start(WinState* state)
 {
-	_should_close = true;
-}
-
-void CameraManager::start()
-{
-	_should_close = false;
 	motion_dir = { 0,0,0 };
 	_cursor_pos = { 0,0 };
-	_updater_thread = thread(&CameraManager::_update_loop, this);
+	_updater_thread = thread(&CameraManager::_update_loop, this, state);
 	return;
 }
 
 void CameraManager::stop()
 {
-	_should_close = true;
 	_updater_thread.detach();
 	_cam->reset();
 	return;
@@ -181,8 +172,8 @@ void CameraManager::stop()
 
 void CameraManager::rotate(double dx, double dy)
 {
-	dx *= -camspeed;
-	dy *= -camspeed;
+	dx *= -sensitivity;
+	dy *= -sensitivity;
 	_cam->rotate(dy, dx);
 	return;
 }
