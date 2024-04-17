@@ -27,8 +27,29 @@ using mat3 = matrix<3, 3, GLfloat>;
 
 class ParticleSimulation : public BaseViewWindow {
 protected:
-	/******* THIS STUFF RUNS AFTER OPENGL CONTEXT IS INITIALIZED ******/ 
-	void _main() {
+
+	void _main(); // Anything which needs to run after OpenGL context is initialized
+				  // must go here.
+	void _updateSystem();
+	void _renderSystem();
+	void _renderUI();
+	void _resetParams();
+	bool is_running = false;
+	Particles* parts_ptr;
+	ComputeShader system;
+	float damp;
+	float f;
+	float a;
+	float b;
+	float c;
+public:
+	ParticleSimulation(int width, int height) : BaseViewWindow(width, height){
+		_resetParams();
+	}
+	void close();
+};
+
+void ParticleSimulation::_main() {
 		// tell GL to only draw onto a pixel if the shape is closer to the viewer
 		glEnable(GL_DEPTH_TEST); // enable depth-testing
 
@@ -65,84 +86,62 @@ protected:
     	ImGui_ImplGlfw_Shutdown();
     	ImGui::DestroyContext();
 	}
-
-	void _updateSystem(){
-		// Set up compute shader uniforms
-		system.use();
-		system.setUniform("damp",damp);
-		system.setUniform("f",f);
-		system.setUniform("a",a);
-		system.setUniform("b",b);
-		system.setUniform("c",c);
-		parts_ptr->update(system,{128,1,1});
-	}
-
-	void _renderSystem() {
-		// Set up main shader uniforms
-		_main_shader.use();
-		_cam.connectUniforms(_main_shader);
-		parts_ptr->draw(_main_shader);
-	}
-
-	void _renderUI(){
-		// Start the Dear ImGui frame
-    	ImGui_ImplOpenGL3_NewFrame();
-    	ImGui_ImplGlfw_NewFrame();
-    	ImGui::NewFrame();
-
-    	// Parameters controls
-    	ImGui::Begin("Parameters");                          
-    	ImGui::SliderFloat("damping", &damp, 0.0f, 1.0f);
-		ImGui::SliderFloat("f_r", &f, -50, 50);
-		ImGui::SliderFloat("a", &a, 0, 1.0f);
-		ImGui::SliderFloat("b", &b, 0, 1.0f);
-		ImGui::SliderFloat("c", &c, 0, 1.0f);
-    	ImGui::End();
-
-		// Application controls
-		ImGui::Begin("Setup Config");
-		if (ImGui::Button("Start", ImVec2(100,30))) is_running = true;
-		if (ImGui::Button("Stop", ImVec2(100,30))) is_running = false;
-		if (ImGui::Button("Reset", ImVec2(100,30))) parts_ptr = new Particles(NPARTS);
-		ImGui::End();
-
-		// Camera controls
-    	ImGui::Begin("Camera");                          
-		ImGui::SliderFloat("speed", &_cam_manager.movespeed, 0, 1.0f);
-    	ImGui::End();
-
-    	// Rendering
-    	ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());	
-	}
-	void resetParams() {
-		damp = 0;
-		f = 0;
-		a = 0;
-		b = 0;
-		c = 0;
-	}
-
-	Particles* parts_ptr;
-	ComputeShader system;
-	float damp; //power decrease at large distances
-	float f;//radial acceleration	
-	float a; //rotation in xy
-	float b; //rotation in yz
-	float c; //rotation in xz
-	bool is_running = false;
-public:
-	ParticleSimulation(int width, int height) : BaseViewWindow(width, height){
-		resetParams();
-	}
-	void close() {
-		is_running = false;
-		resetParams();
-		delete parts_ptr;
-		BaseViewWindow::close();
-	}
-};
-
+void ParticleSimulation::_updateSystem(){
+	// Set up compute shader uniforms
+	system.use();
+	system.setUniform("damp",damp);
+	system.setUniform("f",f);
+	system.setUniform("a",a);
+	system.setUniform("b",b);
+	system.setUniform("c",c);
+	parts_ptr->update(system,{128,1,1});
+}
+void ParticleSimulation::_renderSystem() {
+	// Set up main shader uniforms
+	_main_shader.use();
+	_cam.connectUniforms(_main_shader);
+	parts_ptr->draw(_main_shader);
+}
+void ParticleSimulation::_renderUI(){
+	// Start the Dear ImGui frame
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
+	// Parameters controls
+	ImGui::Begin("Parameters");                          
+	ImGui::SliderFloat("damping", &damp, 0.0f, 1.0f);
+	ImGui::SliderFloat("f_r", &f, -50, 50);
+	ImGui::SliderFloat("a", &a, 0, 1.0f);
+	ImGui::SliderFloat("b", &b, 0, 1.0f);
+	ImGui::SliderFloat("c", &c, 0, 1.0f);
+	ImGui::End();
+	// Application controls
+	ImGui::Begin("Setup Config");
+	if (ImGui::Button("Start", ImVec2(100,30))) is_running = true;
+	if (ImGui::Button("Stop", ImVec2(100,30))) is_running = false;
+	if (ImGui::Button("Reset", ImVec2(100,30))) parts_ptr = new Particles(NPARTS);
+	ImGui::End();
+	// Camera controls
+	ImGui::Begin("Camera");                          
+	ImGui::SliderFloat("speed", &_cam_manager.movespeed, 0, 1.0f);
+	ImGui::End();
+	// Rendering
+	ImGui::Render();
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());	
+}
+void ParticleSimulation::_resetParams() {
+	damp = 0;
+	f = 0;
+	a = 0;
+	b = 0;
+	c = 0;
+}
+void ParticleSimulation::close() {
+	is_running = false;
+	_resetParams();
+	delete parts_ptr;
+	BaseViewWindow::close();
+}
 
 int main() {
 	std::cout << "Welcome.\n\n";
