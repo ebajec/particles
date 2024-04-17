@@ -48,8 +48,8 @@ public:
 	/*Camera will move in this direction each camera update. Camera::translate()
 	* is called with motion_dir as the argument.*/
 	vec3 motion_dir = { 0,0,0 };
-	double movespeed = 0.000001;
-	double camspeed = 0.004;
+	float movespeed = 1;
+	float camspeed = 0.004;
 
 	CameraManager() {}
 	~CameraManager();

@@ -19,8 +19,8 @@
 using vec3 = matrix<3, 1, GLfloat>;
 using mat3 = matrix<3, 3, GLfloat>;
 
-#define WINDOW_HEIGHT 800	
-#define WINDOW_WIDTH 800
+#define WINDOW_HEIGHT 1280	
+#define WINDOW_WIDTH 1280
 
 #define NPARTS 100000
 
@@ -47,10 +47,11 @@ protected:
     	ImGui_ImplGlfw_InitForOpenGL(_window, true);
     	ImGui_ImplOpenGL3_Init("#version 130");
 
-		float damp = 100;
-		float a = 1; 
-		float b = 1;
-		float c = 1;
+		float damp = 1;
+		float f = 0;
+		float a = 0; 
+		float b = 0;
+		float c = 0;
 
     	while (!glfwWindowShouldClose(_window)) {
     	    glfwPollEvents();
@@ -62,11 +63,16 @@ protected:
 
     	    // Define your UI here
     	    ImGui::Begin("Parameters");                          
-    	    ImGui::SliderFloat("damping", &damp, 0.0f, 100.0f);
-			ImGui::SliderFloat("a", &a, -1.0f, 1.0f);
-			ImGui::SliderFloat("b", &b, -1.0f, 1.0f);
-			ImGui::SliderFloat("c", &c, -1.0f, 1.0f);
+    	    ImGui::SliderFloat("damping", &damp, 0.0f, 1.0f);
+			ImGui::SliderFloat("f_r", &f, -50, 50);
+			ImGui::SliderFloat("a", &a, 0, 1.0f);
+			ImGui::SliderFloat("b", &b, 0, 1.0f);
+			ImGui::SliderFloat("c", &c, 0, 1.0f);
+    	    ImGui::End();
 
+			// Define your UI here
+    	    ImGui::Begin("Camera");                          
+			ImGui::SliderFloat("speed", &_cam_manager.movespeed, 0, 1.0f);
     	    ImGui::End();
 
     	    // Rendering
@@ -82,6 +88,7 @@ protected:
 			_cam.connectUniforms(_main_shader);
 			system.use();
 			system.setUniform("damp",damp);
+			system.setUniform("f",f);
 			system.setUniform("a",a);
 			system.setUniform("b",b);
 			system.setUniform("c",c);

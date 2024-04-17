@@ -102,17 +102,22 @@ void BaseViewWindow::_keyCallback(GLFWwindow* window, int key, int scancode, int
 
 void BaseViewWindow::_cursorPosCallback(GLFWwindow* window, double xpos, double ypos)
 {
-	
 	auto win = static_cast<BaseViewWindow*>(glfwGetWindowUserPointer(window));
+	int width, height;
+    glfwGetWindowSize(window, &width, &height);
+
+	auto dx = xpos - width/2;
+	auto dy = ypos - height/2;
+
 	if (win->_mouse_enabled) {
-		win->_cam_manager.rotate(xpos - win->_width/2, ypos - win->_height/2);
-	}
+		win->_cam_manager.rotate(dx,dy);
+		glfwSetCursorPos(window,width/2,height/2);
+	}	
 }
 
 void BaseViewWindow::_enableMouseControls()
 {
 	//Center cursor so camera does not jerk
-	
 	glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 	if (glfwRawMouseMotionSupported()) {
@@ -130,7 +135,6 @@ void BaseViewWindow::_disableMouseControls()
 	if (glfwRawMouseMotionSupported()) {
 		glfwSetInputMode(_window, GLFW_RAW_MOUSE_MOTION, GLFW_FALSE);
 	}
-	glfwSetCursorPos(_window,_width/2,_height/2);
 	return;
 }
 
@@ -147,7 +151,7 @@ void CameraManager::_update_loop()
 {
 	while (true) {
 		if (_should_close) return;
-		_cam->translate(motion_dir * movespeed);
+		_cam->translate(motion_dir * pow(movespeed,2)*1e-4f);
 	}
 	return;
 }
@@ -175,11 +179,10 @@ void CameraManager::stop()
 	return;
 }
 
-void CameraManager::rotate(double x_new, double y_new)
+void CameraManager::rotate(double dx, double dy)
 {
-	double dx = (_cursor_pos[0][0] - x_new) * camspeed;
-	double dy = (_cursor_pos[0][1] - y_new) * camspeed;
-	_cursor_pos = { (float)x_new,(float)y_new };
+	dx *= -camspeed;
+	dy *= -camspeed;
 	_cam->rotate(dy, dx);
 	return;
 }
