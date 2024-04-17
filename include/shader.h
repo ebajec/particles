@@ -38,6 +38,7 @@ protected:
 
 class ComputeShader : public ShaderProgram {
 public:
+	ComputeShader() {}
 	ComputeShader(const char* shader_path);
 };
 
