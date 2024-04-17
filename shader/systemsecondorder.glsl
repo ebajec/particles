@@ -44,7 +44,7 @@ vec3 g(vec3 pos,vec3 vel) {
         -f,          a*pos.y,     -b*pos.z,
         -a*pos.y,     -f,         c*pos.x,
         b*pos.z,     -c*pos.x,    -f
-    )*pos;
+    )*pos * exp(-damp*r);
 }
 
 vec3 system(vec3 pos, vec3 vel) {
@@ -110,8 +110,8 @@ void main() {
     vec3 k_4 = system(T2(x_0,v_3,k_3,dt), v_3);
 
     vec3 v_final = v_0 + dt*(k_1 + 2*k_2 + 2*k_3 + k_4)/6;
-    vec3 x_final = T2(x_0,dt*(v_1 + 2*v_2 + 2*v_3 + v_final)/6, v_1 - v_final, dt);
-
+    vec3 x_final = T2(x_0,v_0, v_final - v_0, dt);
+    
     velocities[idx] = v_final;
     update_trail(ind,cur,next,x_final);
 }
