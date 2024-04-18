@@ -18,7 +18,6 @@ void GLBufferWrapper<nVBO,nSSBO>::draw(ShaderProgram shader,int count)
 template <int nVBO, int nSSBO>
 void GLBufferWrapper<nVBO, nSSBO>::openBuffer( float** out,GLuint buffer_object, int loc, GLuint access)
 {
-    float* mem;
 	GLuint buf;
 	size_t bufsize;
 	int n = this->arraySize();
@@ -88,12 +87,8 @@ void GLBufferWrapper<nVBO, nSSBO>::initBuffers(GLenum usage)
 	float** vbufs = new float*[nVBO];
 	float** sbufs = new float*[nSSBO];
 	
-	for (int i = 0; i < nVBO ; i++) {
-		vbufs[i] = new float[vboBufSize(i)];
-	}
-	for (int i = 0; i < nSSBO; i++) {
-		sbufs[i] = new float[ssboBufSize(i)];
-	}
+	for (int i = 0; i < nVBO ; i++) vbufs[i] = new float[vboBufSize(i)];
+	for (int i = 0; i < nSSBO; i++) sbufs[i] = new float[ssboBufSize(i)];
 
 	_load(vbufs,sbufs);
 	glBindVertexArray(_vao);
@@ -111,5 +106,9 @@ void GLBufferWrapper<nVBO, nSSBO>::initBuffers(GLenum usage)
 		glBufferData(GL_SHADER_STORAGE_BUFFER, ssboBufSize(i) * sizeof(float), sbufs[i], usage);
 	}
 	return;
+
+
+	for (int i = 0; i < nVBO; i++) delete vbufs[i];
+	for (int i = 0; i < nSSBO; i++) delete sbufs[i];
 }
 #endif
