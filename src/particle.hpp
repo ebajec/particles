@@ -106,7 +106,7 @@ vec3 random_in_bounds(vec3 bound) {
 
 //these are just random configurations for generating points
 inline vec3 point_ball(float r) {
-	return Sphere(r*gaussian(0.7,0.3))(gaussian(PI/2,PI/5),gaussian(PI,PI));
+	return Sphere(r*gaussian(0.8,0.1))(gaussian(PI/2,PI/5),gaussian(PI,PI));
 }
 
 inline vec3 i_torus(float rhole,float rtube, int i,int n) {
@@ -129,9 +129,9 @@ void Particles::_load(float **vbufs,float **sbufs)
 	int M = sqrt(_nparts);
 	for (int i = 0; i < this->_nparts; i++) {
 
-		vec4 point = point_ball(1.0f);//vec4{cos(2*PI*i/this->_nparts),sin(2*PI*i/this->_nparts),0,0};
+		vec4 point = vec4{cos(2*PI*i/this->_nparts),sin(2*PI*i/this->_nparts),0,0};
 
-		vec4 vel = cross(rotatexz<GLfloat>(PI/2)*vec3(point),vec3(point));
+		vec4 vel = {0,0,1,0};
 		vec4 color = vec3{1,1,1};
 
 		for (int k = 0; k < 4*NSTEPS; k++) {

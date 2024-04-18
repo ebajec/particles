@@ -40,11 +40,13 @@ vec3 sigmoid3(vec3 x ){
 //cool looking thing
 vec3 g(vec3 pos,vec3 vel) {
     float r = sqrt(pos.x*pos.x + pos.y*pos.y + pos.z*pos.z);
+    float d = exp(-damp*r);
+
     return mat3(
-        -f,          a*pos.y,     -b*pos.z,
-        -a*pos.y,     -f,         c*pos.x,
-        b*pos.z,     -c*pos.x,    -f
-    )*pos * exp(-damp*r);
+        -f*d,          -a*pos.x,     -b*pos.y,
+        a*pos.x,     -f*d,         -c*pos.z,
+        b*pos.y,     c*pos.z,    -f*d
+    )*vel ;
 }
 
 vec3 system(vec3 pos, vec3 vel) {
