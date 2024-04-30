@@ -39,7 +39,7 @@ Particles::Particles(int count) : GLBufferWrapper<PART_VBOS,PART_SSBOS>(){
  * @param shader ComputeShader instance
  * @param groups Work groups
  */
-void Particles::update(ComputeShader shader,matrix<1,3,int> groups)
+void Particles::update(ShaderProgram sys,matrix<1,3,int> groups)
 {
 	// Reset offset
 	
@@ -49,11 +49,11 @@ void Particles::update(ComputeShader shader,matrix<1,3,int> groups)
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER,1,_ssbo[PART_VEL]);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER,2,_vbos[PART_COLOR]);
 
-	shader.use();
-	shader.setUniform("NPARTS", (unsigned int)_nparts);
-	shader.setUniform("STEPS",(unsigned int)(NSTEPS-1));
-	shader.setUniform("offset",(unsigned int)offset);
-	shader.setUniform("t",(float)glfwGetTime());
+	sys.use();
+	sys.setUniform("NPARTS", (unsigned int)_nparts);
+	sys.setUniform("STEPS",(unsigned int)(NSTEPS-1));
+	sys.setUniform("offset",(unsigned int)offset);
+	sys.setUniform("t",(float)glfwGetTime());
 
 	glDispatchCompute(
 		(_nparts-1) / (*groups[0]) + 1,
@@ -131,7 +131,7 @@ void Particles::_load(float **vbufs,float **sbufs)
 
 		vec4 point = vec4{cos(2*PI*i/this->_nparts),sin(2*PI*i/this->_nparts),0,0};
 
-		vec4 vel = {0,0,1,0};
+		vec4 vel = point;
 		vec4 color = vec3{1,1,1};
 
 		for (int k = 0; k < 4*NSTEPS; k++) {

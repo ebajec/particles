@@ -6,10 +6,8 @@
 #include <GLFW/glfw3.h>
 #include <thread>
 #include <functional>
-#include "camera.h"
-#include "shader.h"
-#include "bufwrapper.h"
 #include <map>
+#include "camera.h"
 
 class WinState{
 public:
@@ -88,7 +86,6 @@ protected:
 	WinState state;
 
 	Camera _cam;
-	ShaderProgram _main_shader;
 	KeyManager _key_manager;
 	CameraManager _cam_manager;
 

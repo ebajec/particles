@@ -34,9 +34,14 @@ protected:
 	void _renderSystem();
 	void _renderUI();
 	void _resetParams();
+	void _buttonReset();
+	void _buttonStart();
+	void _buttonStop();
 	bool is_running = false;
 	Particles* parts_ptr;
-	ComputeShader system;
+	ShaderProgram main_program;
+	ShaderProgram system;
+	float stop_time;
 	float damp;
 	float f;
 	float a;
@@ -52,12 +57,13 @@ public:
 void ParticleSimulation::_main() {
 		// tell GL to only draw onto a pixel if the shape is closer to the viewer
 		glEnable(GL_DEPTH_TEST); // enable depth-testing
-
-		_main_shader = ShaderProgram("../shader/vertex.glsl", "../shader/frag.glsl");
+		main_program = ShaderProgram();
+		main_program.addShader("../shader/vertex.glsl", GL_VERTEX_SHADER);
+		main_program.addShader("../shader/frag.glsl", GL_FRAGMENT_SHADER);
+		main_program.link();
+		system = ShaderProgram("../shader/systemsecondorder.glsl", GL_COMPUTE_SHADER);
 		
 		this->parts_ptr = new Particles(NPARTS);
-
-		system = ComputeShader("../shader/systemsecondorder.glsl");
 
 		// Setup Dear ImGui context
     	IMGUI_CHECKVERSION();
@@ -98,9 +104,9 @@ void ParticleSimulation::_updateSystem(){
 }
 void ParticleSimulation::_renderSystem() {
 	// Set up main shader uniforms
-	_main_shader.use();
-	_cam.connectUniforms(_main_shader);
-	parts_ptr->draw(_main_shader);
+	main_program.use();
+	_cam.connectUniforms(main_program);
+	parts_ptr->draw(main_program);
 }
 void ParticleSimulation::_renderUI(){
 	// Start the Dear ImGui frame
@@ -111,15 +117,15 @@ void ParticleSimulation::_renderUI(){
 	ImGui::Begin("Parameters");                          
 	ImGui::SliderFloat("damping", &damp, 0.0f, 1.0f);
 	ImGui::SliderFloat("f_r", &f, -50, 50);
-	ImGui::SliderFloat("a", &a, 0, 1.0f);
-	ImGui::SliderFloat("b", &b, 0, 1.0f);
-	ImGui::SliderFloat("c", &c, 0, 1.0f);
+	ImGui::SliderFloat("a", &a, -1.0f, 1.0f);
+	ImGui::SliderFloat("b", &b, -1.0f, 1.0f);
+	ImGui::SliderFloat("c", &c, -1.0f, 1.0f);
 	ImGui::End();
 	// Application controls
 	ImGui::Begin("Setup Config");
-	if (ImGui::Button("Start", ImVec2(100,30))) is_running = true;
-	if (ImGui::Button("Stop", ImVec2(100,30))) is_running = false;
-	if (ImGui::Button("Reset", ImVec2(100,30))) parts_ptr = new Particles(NPARTS);
+	if (ImGui::Button("Start", ImVec2(100,30))) _buttonStart();
+	if (ImGui::Button("Stop", ImVec2(100,30))) _buttonStop();
+	if (ImGui::Button("Reset", ImVec2(100,30))) _buttonReset();
 	ImGui::End();
 	// Camera controls
 	ImGui::Begin("Camera");                          
@@ -135,6 +141,16 @@ void ParticleSimulation::_resetParams() {
 	a = 0;
 	b = 0;
 	c = 0;
+}
+void ParticleSimulation::_buttonReset(){
+	delete this->parts_ptr;
+	this->parts_ptr = new Particles(NPARTS);
+}
+void ParticleSimulation::_buttonStart(){
+	is_running = true;
+}
+void ParticleSimulation::_buttonStop(){
+	is_running = false;
 }
 void ParticleSimulation::close() {
 	is_running = false;

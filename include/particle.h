@@ -15,8 +15,7 @@ enum PART_SSBO_ATTR {PART_VEL};
 class Particles : public GLBufferWrapper<PART_VBOS,PART_SSBOS> {
 public:
     Particles(int count);
-    
-    void update(ComputeShader shader,matrix<1,3,int> groups);
+    void update(ShaderProgram sys,matrix<1,3,int> groups);
     void draw(ShaderProgram shader);
 
     double t_o = 0;

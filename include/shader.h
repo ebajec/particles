@@ -13,9 +13,10 @@ using mat4 = matrix<4, 4, GLfloat>;
 class ShaderProgram {
 public:
 	ShaderProgram() {}
-	ShaderProgram(const char* vertex_shader_path, const char* fragment_shader_path,const char* geometry_shader_path = "a");
-
+	ShaderProgram(const char* path, GLuint type);
+	void addShader(const char* path, GLuint type);
 	void use() const { glUseProgram(program); }
+	void link();
 
 	void setUniform(const char* name, int value);
 	void setUniform(const char* name, unsigned int value);
@@ -27,19 +28,18 @@ public:
 	GLint getUniform(const char* name) const { return glGetUniformLocation(program, name); }
 
 	GLuint program;
+
+	bool initialized = false;
 protected:
 
 	void _compileShader(GLenum type, const char* source);
 
 	//create shader program
-	void init() { program = glCreateProgram(); }
+	void _init() { 
+		initialized = true;
+		program = glCreateProgram(); 
+		}
 
-};
-
-class ComputeShader : public ShaderProgram {
-public:
-	ComputeShader() {}
-	ComputeShader(const char* shader_path);
 };
 
 #endif

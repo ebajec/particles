@@ -29,47 +29,46 @@ inline string read_text_file(const char* src){
 	return text;
 }
 
-
+/*
+	Creates shader with source from path and specified type.  Automatically links
+	program, so if multipe shaders are needed use addShader() and link().
+*/
 ShaderProgram::ShaderProgram(
-const char* vertex_shader_path, 
-const char* fragment_shader_path, 
-const char* geometry_shader_path) {
-	init();
+const char* path, GLuint type) {
+	_init();
+	addShader(path,type);
+	glLinkProgram(program);
+}
 
-	string vertex_shader_source = read_text_file(vertex_shader_path);
-	string fragment_shader_source = read_text_file(fragment_shader_path);
-	string geometry_shader_source = "";
-
-	if (geometry_shader_path != "") {
-		//geometry_shader_source = read_text_file(geometry_shader_path);
-		//_compileShader(GL_GEOMETRY_SHADER, geometry_shader_source.c_str());
+void ShaderProgram::addShader(const char *path, GLuint type)
+{
+	if (!initialized) {
+		_init();
 	}
+	string source = read_text_file(path);
 
-	if (fragment_shader_source == "" || vertex_shader_source == "") {
+	if (source == "") {
 		fprintf(stderr, "ERROR: could not open shader files\n");
 		glfwTerminate();
 	}
 	
 	//compile shaders
-	_compileShader(GL_VERTEX_SHADER, vertex_shader_source.c_str());
-	_compileShader(GL_FRAGMENT_SHADER, fragment_shader_source.c_str());
-
-	glLinkProgram(program);
+	_compileShader(type, source.c_str());
 }
 
-ComputeShader::ComputeShader(const char* shader_path) {
-	init();
-
-	string shader_source = read_text_file(shader_path);
-
-	if (shader_source == "") {
-		fprintf(stderr, "ERROR: could not open shader files\n");
-		glfwTerminate();
-	}
-
-	_compileShader(GL_COMPUTE_SHADER, shader_source.c_str());
-
+void ShaderProgram::link() {
 	glLinkProgram(program);
+	GLint success = 0;
+	glGetShaderiv(program, GL_LINK_STATUS, &success);
+
+	if (success == GL_FALSE) {
+		GLint length = 0;
+		glGetShaderiv(program, GL_INFO_LOG_LENGTH, &length);
+		std::vector<GLchar> error_message(length);
+		glGetShaderInfoLog(program, length, NULL, &error_message[0]);
+
+		printf(&error_message[0]);
+	}
 }
 
 void ShaderProgram::setUniform(const char* name, int value)
