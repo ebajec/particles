@@ -105,10 +105,10 @@ void GLBufferWrapper<nVBO, nSSBO>::initBuffers(GLenum usage)
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, _ssbo[i]);
 		glBufferData(GL_SHADER_STORAGE_BUFFER, ssboBufSize(i) * sizeof(float), sbufs[i], usage);
 	}
+
+	for (int i = 0; i < nVBO; i++) delete[] vbufs[i];
+	for (int i = 0; i < nSSBO; i++) delete[] sbufs[i];
+
 	return;
-
-
-	for (int i = 0; i < nVBO; i++) delete vbufs[i];
-	for (int i = 0; i < nSSBO; i++) delete sbufs[i];
 }
 #endif
